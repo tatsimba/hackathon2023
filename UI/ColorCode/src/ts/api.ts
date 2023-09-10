@@ -9,3 +9,10 @@ export const sendImage = (image: Blob, filename=`image.${VITE_IMAGE_TYPE}`) => {
         body: formData
     });
 }
+
+export const downloadImage = (image: Blob, filename=`image.${VITE_IMAGE_TYPE}`) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(image);
+    a.download = filename;
+    a.click();
+}

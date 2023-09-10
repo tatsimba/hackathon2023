@@ -1,7 +1,7 @@
 import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer} from "./layer-capture";
 import {startVideo, pauseVideo, captureVideoFrame} from "./layer-video";
-import {sendImage} from "./api";
+import {downloadImage, sendImage} from "./api";
 
 console.log(import.meta.env)
 
@@ -18,5 +18,6 @@ onStartButtonClick(async () => {
 onCaptureButtonClick(async () => {
     pauseVideo();
     const blob = await captureVideoFrame();
+    // blob && downloadImage(blob);
     blob && sendImage(blob);
 });
