@@ -4,12 +4,21 @@ namespace ColorCodeHackathon2023.Model.GPT;
 
 public class ModelPrompt
 {
+    [JsonPropertyName("messages")]
+    public List<Message> Messages
+    {
+        get;
+        set;
+    } = new();
+
+    /*
     [JsonPropertyName("prompt")]
     public string? Prompt
     {
         get;
         set;
     }
+    */
 
     [JsonPropertyName("max_tokens")]
     public int MaxTokens
@@ -39,6 +48,7 @@ public class ModelPrompt
         set;
     }
 
+    /*
     [JsonPropertyName("stream")]
     public bool Stream
     {
@@ -59,7 +69,25 @@ public class ModelPrompt
         get;
         set;
     }
+    */
 };
+
+public class Message
+{
+    [JsonPropertyName("role")]
+    public string Role
+    {
+        get;
+        set;
+    } = "user";
+
+    [JsonPropertyName("content")]
+    public string Content
+    {
+        get;
+        set;
+    } = string.Empty;
+}
 
 public class Choice
 {

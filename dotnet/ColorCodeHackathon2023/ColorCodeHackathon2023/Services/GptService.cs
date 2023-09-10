@@ -13,29 +13,30 @@ public interface IGptService
 
 public class GptService : IGptService
 {
-    private const string CompletionsUriPath = "{0}/openai/deployments/gpt-35-turbo-16k/completions?api-version=2023-07-01-preview";
+    private const string CompletionsUriPath = "{0}/openai/deployments/gpt-35-turbo-16k/chat/completions?api-version=2023-08-01-preview";
 
     private readonly string _endpoint;
     private readonly string _apiKey;
 
-    public GptService(IOptions<OpenAISettings> openAISettings)
+    public GptService(IOptions<OpenAISettings> openAiSettings)
     {
-        _endpoint = openAISettings.Value.Endpoint;
-        _apiKey = openAISettings.Value.ApiKey;
+        _endpoint = openAiSettings.Value.Endpoint;
+        _apiKey = openAiSettings.Value.ApiKey;
     }
 
     public async Task<string> RunPromptAsync(string prompt, bool useSteam = false)
     {
         var requestData = JsonSerializer.Serialize(new ModelPrompt
         {
-            Prompt = prompt,
-            MaxTokens = 4000,
+            //Prompt = prompt,
+            Messages = { new Message { Content = prompt } },
+            MaxTokens = 100,
             Temperature = 1,
             TopP = 1,
             N = 5,
-            Stream = useSteam,
-            LogProbs = null,
-            Stop = useSteam ? "\r\n" : "\n"
+           // Stream = useSteam,
+           // LogProbs = null,
+           // Stop = useSteam ? "\r\n" : "\n"
         });
 
         // Available models are listed here: https://msasg.visualstudio.com/QAS/_wiki/wikis/QAS.wiki/134728/Getting-Started-with-Substrate-LLM-API?anchor=available-models
@@ -52,7 +53,12 @@ public class GptService : IGptService
         try
         {
             var httpResponse = await httpClient.SendAsync(request);
-            return await httpResponse.Content.ReadAsStringAsync();
+            var responseContent = httpResponse?.Content is not null
+                ? await httpResponse.Content.ReadAsStringAsync()
+                : string.Empty;
+            
+            var promptFilterResult = JsonSerializer.Deserialize<CompletionResultChat>(responseContent);
+            return promptFilterResult?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
         }
         catch (Exception e)
         {

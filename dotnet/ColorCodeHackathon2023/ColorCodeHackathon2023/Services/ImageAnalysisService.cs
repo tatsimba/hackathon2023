@@ -22,7 +22,7 @@ public class ImageAnalysisService : IImageAnalysisService
         var denseCaptions = _visionService.AnalyzeDenseCaptions(imageFile);
         //2) analyze with GPT
         var promptWearingSummary = $"Please summarize in one sentence what is this person wearing? \"{denseCaptions}\"";
-        //var result = await _gptService.RunPromptAsync(promptWearingSummary);
-        return denseCaptions;
+        var result = await _gptService.RunPromptAsync(promptWearingSummary);
+        return result;
     }
 }
