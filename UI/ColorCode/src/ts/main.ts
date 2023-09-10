@@ -1,7 +1,8 @@
 import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer} from "./layer-capture";
-import {startVideo, pauseVideo, captureVideoFrame, drawSegmentation} from "./layer-video";
-import {downloadImage, sendImage} from "./api";
+import {startVideo, pauseVideo, captureVideoFrame} from "./layer-video";
+import {drawSegmentation} from "./layer-segmentation";
+import {sendImage} from "./api";
 
 
 onStartButtonClick(async () => {
@@ -17,9 +18,12 @@ onStartButtonClick(async () => {
 onCaptureButtonClick(async () => {
     pauseVideo();
     const blob = await captureVideoFrame();
-    // blob && downloadImage(blob);
+
     blob && sendImage(blob).then(async res => {
         const json = await res.json();
-        drawSegmentation(json.imageSegmentationLabels);
+
+        console.time("drawSegmentation");
+        await drawSegmentation(json.imageSegmentationLabels);
+        console.timeEnd("drawSegmentation");
     });
 });
