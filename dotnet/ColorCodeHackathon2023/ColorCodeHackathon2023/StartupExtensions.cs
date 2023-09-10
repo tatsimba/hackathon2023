@@ -10,8 +10,10 @@ public static class StartupExtensions
         services.Configure<AzureAISettings>(configuration.GetSection(AzureAISettings.Key));
     }
 
-    public static void ConfigureImageAnalysisService(this IServiceCollection services, IConfiguration configuration)
+    public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IImageAnalysisService, ImageAnalysisService>();
+        services.AddSingleton<IGptService, GptService>();
+        services.AddSingleton<IVisionService, VisionService>();
     }
 }
