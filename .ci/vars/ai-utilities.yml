@@ -1,5 +1,0 @@
-variables:
-  TridentWorkloadTypeShort: aiutilities
-  DeployLocation: eastus
-  ProjectLocation: "."
-  conda: ai-utilities
