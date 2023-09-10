@@ -8,7 +8,7 @@ using Microsoft.Identity.Client;
 
 public interface IGptService
 {
-    Task<string> RunPrompt(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003");
+    Task<string> RunPromptAsync(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003");
 }
 
 public class GptService : IGptService
@@ -23,7 +23,7 @@ public class GptService : IGptService
         .WithAuthority("https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47")
         .Build();
 
-    public async Task<string> RunPrompt(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003")
+    public async Task<string> RunPromptAsync(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003")
     {
         var cacheHelper = await CreateCacheHelperAsync().ConfigureAwait(false);
         cacheHelper.RegisterCache(App.UserTokenCache);
@@ -62,29 +62,28 @@ public class GptService : IGptService
                 // cannot get a token silently, so redirect the user to be challenged 
             }
         }
-        if (result == null)
-        {
-            result = await App.AcquireTokenWithDeviceCode(Scopes,
-                deviceCodeResult => {
-                    // This will print the message on the console which tells the user where to go sign-in using
-                    // a separate browser and the code to enter once they sign in.
-                    // The AcquireTokenWithDeviceCode() method will poll the server after firing this
-                    // device code callback to look for the successful login of the user via that browser.
-                    // This background polling (whose interval and timeout data is also provided as fields in the
-                    // deviceCodeCallback class) will occur until:
-                    // * The user has successfully logged in via browser and entered the proper code
-                    // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
-                    // * The developing application calls the Cancel() method on a CancellationToken sent into the method.
-                    //   If this occurs, an OperationCanceledException will be thrown (see catch below for more details).
-                    Console.WriteLine(deviceCodeResult.Message);
-                    return Task.FromResult(0);
-                }).ExecuteAsync();
 
-        }
-        return (result.AccessToken);
+        result ??= await App.AcquireTokenWithDeviceCode(Scopes,
+            deviceCodeResult =>
+            {
+                // This will print the message on the console which tells the user where to go sign-in using
+                // a separate browser and the code to enter once they sign in.
+                // The AcquireTokenWithDeviceCode() method will poll the server after firing this
+                // device code callback to look for the successful login of the user via that browser.
+                // This background polling (whose interval and timeout data is also provided as fields in the
+                // deviceCodeCallback class) will occur until:
+                // * The user has successfully logged in via browser and entered the proper code
+                // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
+                // * The developing application calls the Cancel() method on a CancellationToken sent into the method.
+                //   If this occurs, an OperationCanceledException will be thrown (see catch below for more details).
+                Console.WriteLine(deviceCodeResult.Message);
+                return Task.FromResult(0);
+            }).ExecuteAsync();
+
+        return result.AccessToken;
     }
 
-    static async Task<string> SendRequest(string modelType, string requestData)
+    private static async Task<string> SendRequest(string modelType, string requestData)
     {
         var token = await GetToken();
         var httpClient = new HttpClient();
@@ -98,7 +97,7 @@ public class GptService : IGptService
         return (await httpResponse.Content.ReadAsStringAsync());
     }
 
-    static async Task<string> SendStreamRequest(string modelType, string requestData)
+    private static async Task<string> SendStreamRequest(string modelType, string requestData)
     {
         var token = await GetToken();
         var httpClient = new HttpClient();
