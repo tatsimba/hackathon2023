@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from PIL import Image
 from transformers import SegformerImageProcessor, AutoModelForSemanticSegmentation
 import matplotlib.pyplot as plt
@@ -32,6 +32,11 @@ def getLogger():
     logger.info("finished init logger")
     return logger
 
+
+@app.route('/')
+def index():
+   print('Request for index page received')
+   return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 @compress.compressed()
