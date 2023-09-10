@@ -1,9 +1,8 @@
 import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer} from "./layer-capture";
-import {startVideo, pauseVideo, captureVideoFrame} from "./layer-video";
-import {sendImage} from "./api";
+import {startVideo, pauseVideo, captureVideoFrame, drawSegmentation} from "./layer-video";
+import {downloadImage, sendImage} from "./api";
 
-console.log(import.meta.env)
 
 onStartButtonClick(async () => {
     await Promise.all([
@@ -18,5 +17,9 @@ onStartButtonClick(async () => {
 onCaptureButtonClick(async () => {
     pauseVideo();
     const blob = await captureVideoFrame();
-    blob && sendImage(blob);
+    // blob && downloadImage(blob);
+    blob && sendImage(blob).then(async res => {
+        const json = await res.json();
+        drawSegmentation(json.imageSegmentationLabels);
+    });
 });

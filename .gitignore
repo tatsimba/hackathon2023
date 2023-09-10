@@ -63,4 +63,4 @@ deploy
 Geneva.Synthetics.Client.*
 .deploy/Microsoft.Marketplace.SaaS/GenevaSyntheticsConfig/*
 .deploy/Microsoft.Marketplace.SaaS/scripts/DSCM/GenevaActionsCmdlets
-.deploy/Microsoft.Marketplace.SaaS/scripts/DSCM/DscmClientLibrary
+/python/venv
