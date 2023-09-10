@@ -1,5 +1,5 @@
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from PIL import Image
 from transformers import SegformerImageProcessor, AutoModelForSemanticSegmentation
 import matplotlib.pyplot as plt
@@ -7,10 +7,10 @@ import torch.nn as nn
 from flask_compress import Compress
 
 app = Flask(__name__)
-app.config["COMPRESS_REGISTER"] = False  # disable default compression of all eligible requests
+app.config["COMPRESS_REGISTER"] = True  # disable default compression of all eligible requests
+app.config["COMPRESS_ALGORITHM"] = 'gzip'  # 	Supported compression algorithms
 compress = Compress()
 compress.init_app(app)
-
 
 processor = SegformerImageProcessor.from_pretrained("mattmdjaga/segformer_b2_clothes")
 model = AutoModelForSemanticSegmentation.from_pretrained("mattmdjaga/segformer_b2_clothes")
@@ -33,12 +33,17 @@ def getLogger():
     return logger
 
 
+@app.route('/')
+def index():
+   print('Request for index page received')
+   return render_template('index.html')
+
 @app.route('/upload', methods=['POST'])
 @compress.compressed()
 def upload():
-  if 'myImage' not in request.files:
+  if 'image' not in request.files:
     return 'No file uploaded', 400
-  file = request.files['myImage']
+  file = request.files['image']
   # file.save('im-received.jpg')
   image = Image.open(file.stream)
 
@@ -89,10 +94,10 @@ main()
 if __name__ == '__main__':
   try:
     logger.info('starting app.run()')
-    print("### starting app.run()")
+    # print("### starting app.run()")
     app.run(debug=True)
-    print("### completed app.run()")
+    # print("### completed app.run()")
     logger.info('completed app.run()')
   except Exception as e:
-    print("### failed to start up: " + + getattr(e, 'message', repr(e)))
+    # print("### failed to start up: " + + getattr(e, 'message', repr(e)))
     logger.error("failed to start up: " + + getattr(e, 'message', repr(e)))

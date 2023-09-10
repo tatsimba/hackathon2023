@@ -1,1 +1,66 @@
+
+# Most of the below is the result of Visual Studio, gradle and VSTest.
+/**/[Tt]arget/**
+/**/[Bb]in/**
+/**/[Oo]bj/**
+/**/[Oo]ut*/**
+/**/[Tt]est[Rr]esults/**
+/**/[Pp]kg/**
+/**/[Pp]ackages/**
+/**/[Bb]uild/**
+/**/.[Gg]radle/**
+/**/[Rr]elease/**
+/**/[Dd]ebug/**
+/**/[Tt]arget/**
+
+# All kinds of output and temporary files that should not be checked in.
+/**/*.exe
+/**/*.dll
+/**/*.o
+/**/*.hi
+/**/*.class
+/**/*.jar
+/**/*.war
+/**/*.beam
+/**/*.trx
+/**/*.log
+/**/.vs/
+/**/*.bak
+/**/*.suo
+/**/*.user
+/**/*.db
+/**/*.metaproj
+/**/*.metaproj.tmp
+/**/*.lock.json
+/**/*.nupkg
+/**/HelloWorld
+# Default ignored files
+/**/shelf/
+/**/workspace.xml
+# Rider ignored files
+/**/modules.xml
+/**/contentModel.xml
+/**/.idea.*
+/**/projectSettingsUpdater.xml
+# Editor-based HTTP Client requests
+/**/httpRequests/
+
+# Generated version files.
+.version/**/*
+/**/*/PipelineAssemblyInfo.cs
+
+# Visual Studio junk.
+**/.vs/**/*
+/**/*/__pycache__/**/*
+
+# Pipeline generated junk.
+pipeline.log
+endortemp/
+artifacts/
+/**/.idea/*
+/**/coverage.cobertura.xml
+deploy
+Geneva.Synthetics.Client.*
+.deploy/Microsoft.Marketplace.SaaS/GenevaSyntheticsConfig/*
+.deploy/Microsoft.Marketplace.SaaS/scripts/DSCM/GenevaActionsCmdlets
 /python/venv
