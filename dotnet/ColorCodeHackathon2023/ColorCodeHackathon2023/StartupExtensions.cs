@@ -1,5 +1,6 @@
 ﻿namespace ColorCodeHackathon2023;
 
+using Auth;
 using Services;
 using Settings;
 
@@ -16,4 +17,15 @@ public static class StartupExtensions
         services.AddSingleton<IGptService, GptService>();
         services.AddSingleton<IVisionService, VisionService>();
     }
+
+    public static void ConfigureAuthorization(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddAuthentication("ApiKey")
+            .AddScheme<ApiKeyAuthenticationSchemeOptions, ApiKeyAuthenticationSchemeHandler>(
+                "ApiKey",
+                opts => opts.ApiKey = configuration.GetValue<string>("ApiKey")
+            );
+    }
+
+
 }

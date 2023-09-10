@@ -3,6 +3,7 @@
 using Services;
 using System.IO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("image")]
@@ -18,6 +19,7 @@ public class ImageAnalyzerController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(AuthenticationSchemes = "ApiKey")]
     [Route("analyze")]
     public async Task<ActionResult<string>> AnalyzeImage([FromForm] IFormFile image)
     {
