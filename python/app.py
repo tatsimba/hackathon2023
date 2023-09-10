@@ -36,9 +36,9 @@ def getLogger():
 @app.route('/upload', methods=['POST'])
 @compress.compressed()
 def upload():
-  if 'myImage' not in request.files:
+  if 'image' not in request.files:
     return 'No file uploaded', 400
-  file = request.files['myImage']
+  file = request.files['image']
   # file.save('im-received.jpg')
   image = Image.open(file.stream)
 
