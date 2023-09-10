@@ -9,6 +9,7 @@ public static class StartupExtensions
     public static void ConfigureSettings(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AzureAISettings>(configuration.GetSection(AzureAISettings.Key));
+        services.Configure<OpenAISettings>(configuration.GetSection(OpenAISettings.Key));
     }
 
     public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)

@@ -1,33 +1,31 @@
 ﻿namespace ColorCodeHackathon2023.Services;
 
-using Microsoft.Identity.Client.Extensions.Msal;
 using System.Text.Json;
-using Model.GPT;
 using System.Text;
-using Microsoft.Identity.Client;
+using Microsoft.Extensions.Options;
+using Model.GPT;
+using Settings;
 
 public interface IGptService
 {
-    Task<string> RunPromptAsync(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003");
+    Task<string> RunPromptAsync(string prompt, bool useSteam = false);
 }
 
 public class GptService : IGptService
 {
-    private const string Endpoint = "https://fe-26.qas.bing.net/completions";
+    private const string CompletionsUriPath = "{0}/openai/deployments/gpt-35-turbo-16k/completions?api-version=2023-07-01-preview";
 
-    private static readonly IEnumerable<string> Scopes = new List<string>() {
-        "api://68df66a4-cad9-4bfd-872b-c6ddde00d6b2/access"
-    };
+    private readonly string _endpoint;
+    private readonly string _apiKey;
 
-    private static readonly IPublicClientApplication App = PublicClientApplicationBuilder.Create("68df66a4-cad9-4bfd-872b-c6ddde00d6b2")
-        .WithAuthority("https://login.microsoftonline.com/72f988bf-86f1-41af-91ab-2d7cd011db47")
-        .Build();
-
-    public async Task<string> RunPromptAsync(string prompt, bool useSteam = false, string modelType = "dev-text-davinci-003")
+    public GptService(IOptions<OpenAISettings> openAISettings)
     {
-        var cacheHelper = await CreateCacheHelperAsync().ConfigureAwait(false);
-        cacheHelper.RegisterCache(App.UserTokenCache);
+        _endpoint = openAISettings.Value.Endpoint;
+        _apiKey = openAISettings.Value.ApiKey;
+    }
 
+    public async Task<string> RunPromptAsync(string prompt, bool useSteam = false)
+    {
         var requestData = JsonSerializer.Serialize(new ModelPrompt
         {
             Prompt = prompt,
@@ -41,70 +39,34 @@ public class GptService : IGptService
         });
 
         // Available models are listed here: https://msasg.visualstudio.com/QAS/_wiki/wikis/QAS.wiki/134728/Getting-Started-with-Substrate-LLM-API?anchor=available-models
-        return useSteam ? await SendStreamRequest(modelType, requestData) : await SendRequest(modelType, requestData);
+        return useSteam ? await SendStreamRequest(requestData) : await SendRequest(requestData);
     }
 
-    static async Task<string> GetToken()
+    private async Task<string> SendRequest(string requestData)
     {
+        var httpClient = new HttpClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, string.Format(CompletionsUriPath, _endpoint));
+        request.Content = new StringContent(requestData, Encoding.UTF8, "application/json");
+        request.Headers.Add("api-key", _apiKey);
 
-        var accounts = await App.GetAccountsAsync();
-        AuthenticationResult? result = null;
-        if (accounts.Any())
+        try
         {
-            var chosen = accounts.First();
-
-            try
-            {
-                result = await App.AcquireTokenSilent(Scopes, chosen).ExecuteAsync();
-            }
-            catch (MsalUiRequiredException)
-            {
-                // cannot get a token silently, so redirect the user to be challenged 
-            }
+            var httpResponse = await httpClient.SendAsync(request);
+            return await httpResponse.Content.ReadAsStringAsync();
         }
-
-        result ??= await App.AcquireTokenWithDeviceCode(Scopes,
-            deviceCodeResult =>
-            {
-                // This will print the message on the console which tells the user where to go sign-in using
-                // a separate browser and the code to enter once they sign in.
-                // The AcquireTokenWithDeviceCode() method will poll the server after firing this
-                // device code callback to look for the successful login of the user via that browser.
-                // This background polling (whose interval and timeout data is also provided as fields in the
-                // deviceCodeCallback class) will occur until:
-                // * The user has successfully logged in via browser and entered the proper code
-                // * The timeout specified by the server for the lifetime of this code (typically ~15 minutes) has been reached
-                // * The developing application calls the Cancel() method on a CancellationToken sent into the method.
-                //   If this occurs, an OperationCanceledException will be thrown (see catch below for more details).
-                Console.WriteLine(deviceCodeResult.Message);
-                return Task.FromResult(0);
-            }).ExecuteAsync();
-
-        return result.AccessToken;
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
-    private static async Task<string> SendRequest(string modelType, string requestData)
+    private async Task<string> SendStreamRequest(string requestData)
     {
-        var token = await GetToken();
         var httpClient = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
+        var request = new HttpRequestMessage(HttpMethod.Post, string.Format(CompletionsUriPath, _endpoint));
         request.Content = new StringContent(requestData, Encoding.UTF8, "application/json");
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        request.Headers.Add("X-ModelType", modelType);
-
-        var httpResponse = await httpClient.SendAsync(request);
-
-        return (await httpResponse.Content.ReadAsStringAsync());
-    }
-
-    private static async Task<string> SendStreamRequest(string modelType, string requestData)
-    {
-        var token = await GetToken();
-        var httpClient = new HttpClient();
-        var request = new HttpRequestMessage(HttpMethod.Post, Endpoint);
-        request.Content = new StringContent(requestData, Encoding.UTF8, "application/json");
-        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-        request.Headers.Add("X-ModelType", modelType);
+        request.Headers.Add("api-key", _apiKey);
 
         var httpResponse = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
@@ -132,53 +94,5 @@ public class GptService : IGptService
         }
 
         return string.Empty;
-    }
-
-
-    private static async Task<MsalCacheHelper> CreateCacheHelperAsync()
-    {
-        StorageCreationProperties storageProperties;
-
-        try
-        {
-            storageProperties = new StorageCreationPropertiesBuilder(
-                    ".llmapi-token-cache.txt",
-                    ".")
-                .WithLinuxKeyring(
-                    "com.microsoft.substrate.llmapi",
-                    MsalCacheHelper.LinuxKeyRingDefaultCollection,
-                    "MSAL token cache for LLM API",
-                    new KeyValuePair<string, string>("Version", "1"),
-                    new KeyValuePair<string, string>("ProductGroup", "LLMAPI"))
-                .WithMacKeyChain(
-                    "llmapi_msal_service",
-                    "llmapi_msla_account")
-                .Build();
-
-            var cacheHelper = await MsalCacheHelper.CreateAsync(
-                storageProperties).ConfigureAwait(false);
-
-            cacheHelper.VerifyPersistence();
-            return cacheHelper;
-
-        }
-        catch (MsalCachePersistenceException e)
-        {
-            Console.WriteLine($"WARNING! Unable to encrypt tokens at rest." +
-                              $" Saving tokens in plaintext at {Path.Combine(".", ".llmapi-token-cache.txt")} ! Please protect this directory or delete the file after use");
-            Console.WriteLine($"Encryption exception: " + e);
-
-            storageProperties =
-                new StorageCreationPropertiesBuilder(
-                        ".llmapi-token-cache.txt" + ".plaintext", // do not use the same file name so as not to overwrite the encypted version
-                        ".")
-                    .WithUnprotectedFile()
-                    .Build();
-
-            var cacheHelper = await MsalCacheHelper.CreateAsync(storageProperties).ConfigureAwait(false);
-            cacheHelper.VerifyPersistence();
-
-            return cacheHelper;
-        }
     }
 }
