@@ -5,12 +5,14 @@ from transformers import SegformerImageProcessor, AutoModelForSemanticSegmentati
 import matplotlib.pyplot as plt
 import torch.nn as nn
 from flask_compress import Compress
+from flask_cors import CORS
 
 app = Flask(__name__)
 app.config["COMPRESS_REGISTER"] = True  # disable default compression of all eligible requests
 app.config["COMPRESS_ALGORITHM"] = 'gzip'  # 	Supported compression algorithms
 compress = Compress()
 compress.init_app(app)
+CORS(app)
 
 processor = SegformerImageProcessor.from_pretrained("mattmdjaga/segformer_b2_clothes")
 model = AutoModelForSemanticSegmentation.from_pretrained("mattmdjaga/segformer_b2_clothes")

@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿namespace ColorCodeHackathon2023.Controllers;
 
-namespace ColorCodeHackathon2023.Controllers;
-
-using Azure.AI.Vision.Common;
 using Services;
 using System.IO;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("image")]
@@ -20,6 +19,7 @@ public class ImageAnalyzerController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(AuthenticationSchemes = "ApiKey")]
     [Route("analyze")]
     public async Task<ActionResult<string>> AnalyzeImage([FromForm] IFormFile image)
     {
@@ -35,9 +35,7 @@ public class ImageAnalyzerController : ControllerBase
         var tempFile = Path.GetTempFileName();
         Console.WriteLine("Using " + tempFile);
         await image.OpenReadStream().CopyToAsync(new FileStream(tempFile, FileMode.Open));
-
-        var imageSource = VisionSource.FromFile(tempFile);
-        var result = _imageAnalysisService.AnalyzeImage(imageSource);
+        var result = await _imageAnalysisService.AnalyzeImageAsync(tempFile);
         return Ok(result);
     }
 }

@@ -1,66 +1,28 @@
 ﻿namespace ColorCodeHackathon2023.Services;
 
-using System.Text;
-using Azure;
-using Azure.AI.Vision.Common;
-using Azure.AI.Vision.ImageAnalysis;
-using Microsoft.Extensions.Options;
-using Settings;
 
 public interface IImageAnalysisService
 {
-    string AnalyzeImage(VisionSource visionSource);
+    Task<string> AnalyzeImageAsync(string imageFile);
 }
 
 public class ImageAnalysisService : IImageAnalysisService
 {
-    private static readonly ImageAnalysisOptions ImageAnalysisOptions = new()
+    private readonly IVisionService _visionService;
+    private readonly IGptService _gptService;
+    public ImageAnalysisService(IVisionService visionService, IGptService gptService)
     {
-        Features = ImageAnalysisFeature.Caption
-                   | ImageAnalysisFeature.DenseCaptions,
-        Language = "en",
-        GenderNeutralCaption = true,
-    };
-
-    private readonly VisionServiceOptions _visionServiceOptions;
-
-    public ImageAnalysisService(IOptions<AzureAISettings> azureAiSettings)
-    {
-        var endpoint = azureAiSettings.Value.Endpoint;
-        var apiKey = azureAiSettings.Value.ApiKey;
-        _visionServiceOptions = new VisionServiceOptions(endpoint, new AzureKeyCredential(apiKey));
+        _visionService = visionService;
+        _gptService = gptService;
     }
 
-    public string AnalyzeImage(VisionSource visionSource)
+    public async Task<string> AnalyzeImageAsync(string imageFile)
     {
-        using var analyzer = new ImageAnalyzer(_visionServiceOptions, visionSource, ImageAnalysisOptions);
-        var imageAnalysisResult = analyzer.Analyze();
-        var result = new StringBuilder();
-
-        if (imageAnalysisResult.Reason == ImageAnalysisResultReason.Analyzed)
-        {
-            if (imageAnalysisResult.Caption != null)
-            {
-                Console.WriteLine(" Caption:");
-                Console.WriteLine($"   \"{imageAnalysisResult.Caption.Content}\", Confidence {imageAnalysisResult.Caption.Confidence:0.0000}");
-            }
-
-            if (imageAnalysisResult.DenseCaptions != null)
-            {
-                Console.WriteLine(" Dense Captions:");
-                foreach (var caption in imageAnalysisResult.DenseCaptions)
-                {
-                    Console.WriteLine($"   \"{caption.Content}\", Bounding box {caption.BoundingBox}, Confidence {caption.Confidence:0.0000}");
-                    result.AppendLine(caption.Content);
-                }
-            }
-        }
-        else
-        {
-            var errorDetails = ImageAnalysisErrorDetails.FromResult(imageAnalysisResult);
-            throw new Exception($"$Analysis failed, Error reason : {errorDetails.Reason}, Error code : {errorDetails.ErrorCode}, Error message: {errorDetails.Message}");
-        }
-
-        return result.ToString();
+        // 1) get the dense captions
+        var denseCaptions = _visionService.AnalyzeDenseCaptions(imageFile);
+        //2) analyze with GPT
+        var promptWearingSummary = $"Please summarize in one sentence what is this person wearing? \"{denseCaptions}\"";
+        var result = await _gptService.RunPromptAsync(promptWearingSummary);
+        return result;
     }
 }
