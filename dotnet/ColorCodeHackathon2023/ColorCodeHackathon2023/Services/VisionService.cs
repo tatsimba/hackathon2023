@@ -9,7 +9,7 @@ using System.Text;
 
 public interface IVisionService
 {
-    string AnalyzeDenseCaptions(string imageFile);
+    List<string> AnalyzeDenseCaptions(string imageFile);
 }
 
 public class VisionService : IVisionService
@@ -19,7 +19,7 @@ public class VisionService : IVisionService
         Features = ImageAnalysisFeature.Caption
                    | ImageAnalysisFeature.DenseCaptions,
         Language = "en",
-        GenderNeutralCaption = true,
+        GenderNeutralCaption = false
     };
 
     private readonly VisionServiceOptions _visionServiceOptions;
@@ -31,12 +31,12 @@ public class VisionService : IVisionService
         _visionServiceOptions = new VisionServiceOptions(endpoint, new AzureKeyCredential(apiKey));
     }
 
-    public string AnalyzeDenseCaptions(string imageFile)
+    public List<string> AnalyzeDenseCaptions(string imageFile)
     {
         var visionSource = VisionSource.FromFile(imageFile);
         using var analyzer = new ImageAnalyzer(_visionServiceOptions, visionSource, ImageAnalysisOptions);
         var imageAnalysisResult = analyzer.Analyze();
-        var result = new StringBuilder();
+        var result = new List<string>();
 
         if (imageAnalysisResult.Reason == ImageAnalysisResultReason.Analyzed)
         {
@@ -52,7 +52,7 @@ public class VisionService : IVisionService
                 foreach (var caption in imageAnalysisResult.DenseCaptions)
                 {
                     Console.WriteLine($"   \"{caption.Content}\", Bounding box {caption.BoundingBox}, Confidence {caption.Confidence:0.0000}");
-                    result.AppendLine(caption.Content);
+                    result.Add(caption.Content);
                 }
             }
         }
@@ -62,6 +62,6 @@ public class VisionService : IVisionService
             throw new Exception($"$Analysis failed, Error reason : {errorDetails.Reason}, Error code : {errorDetails.ErrorCode}, Error message: {errorDetails.Message}");
         }
 
-        return result.ToString();
+        return result;
     }
 }

@@ -24,6 +24,8 @@ var app = builder.Build();
     app.UseSwaggerUI();
 //}
 
+app.UseCors();
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
