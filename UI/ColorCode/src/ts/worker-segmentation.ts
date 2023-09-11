@@ -1,3 +1,5 @@
+import {Matrix} from "./matrix";
+
 const colorMap: {[key: number]: [number, number, number]} = {
     0: [230, 184, 175],   // Background (Light Reddish)
     1: [255, 200, 128],   // Hat (Orange)
@@ -20,25 +22,52 @@ const colorMap: {[key: number]: [number, number, number]} = {
 };
 
 const drawSegmentation = (width: number, height: number, segmentation: number[][]) => {
-    const data = new Uint8ClampedArray(width * height * 4);
+    const matrix = new Matrix(width, height);
+    const matrixSize = matrix.getSize();
     const seg = segmentation.flat(2);
 
-    for(let i = 0; i < data.length; i += 4) {
-        if(seg[i / 4] === 0) continue;
+    for(let i = 0; i < matrixSize; i += 4) {
+        if(seg[i / 4] !== 0) continue;
 
         const [r, g, b] = colorMap[Number(seg[i / 4])];
+        matrix.setPixel(i, [r, g, b, 100]);
+    }
 
-        data[i] = r;
-        data[i + 1] = g;
-        data[i + 2] = b;
-        data[i + 3] = 150; // alpha
+    for(let i = 0; i < matrixSize; i += 4) {
+        const leftIndex = matrix.getLeftPixelIndex(i);
+        const left = matrix.getPixel(leftIndex);
+
+        const rightIndex = matrix.getRightPixelIndex(i);
+        const right = matrix.getPixel(rightIndex);
+
+        const topIndex = matrix.getTopPixelIndex(i);
+        const top = matrix.getPixel(topIndex);
+
+        const bottomIndex = matrix.getBottomPixelIndex(i);
+        const bottom = matrix.getPixel(bottomIndex);
+
+        const segment = seg[i / 4];
+        const x = left[3] === 100 && segment !== 0;
+        const y = right[3] === 100 && segment !== 0;
+        const z = top[3] === 100 && segment !== 0;
+        const w = bottom[3] === 100 && segment !== 0;
+
+        if(x || y || z || w) {
+            const color: [number, number, number, number] = [...colorMap[segment], 255];
+
+            matrix.setPixel(i, color);
+            matrix.setPixel(leftIndex, color);
+            matrix.setPixel(rightIndex, color);
+            matrix.setPixel(topIndex, color);
+            matrix.setPixel(bottomIndex, color);
+        }
     }
 
     const offscreen = new OffscreenCanvas(width, height);
     const offscreenContext = offscreen.getContext('2d');
 
     const segImg = offscreenContext?.createImageData(width, height);
-    segImg?.data.set(data);
+    segImg?.data.set(matrix.getMatrix());
     segImg && offscreenContext?.putImageData(segImg, 0, 0);
 
     return offscreen;
