@@ -17,10 +17,11 @@ const getVideoPermission = async () => {
 }
 
 const drawVideoFrame = () => {
-    if(video.paused || video.ended) return;
+    if(!video.paused && !video.ended) {
+        ctx?.scale(-1, 1);
+        ctx?.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+    }
     
-    ctx?.scale(-1, 1);
-    ctx?.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
     requestAnimationFrame(drawVideoFrame);
 }
 

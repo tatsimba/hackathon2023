@@ -1,7 +1,7 @@
 import {onStartButtonClick, hideStartLayer} from "./layer-start";
-import {onCaptureButtonClick, showCaptureLayer} from "./layer-capture";
-import {startVideo, pauseVideo, captureVideoFrame} from "./layer-video";
-import {drawSegmentation} from "./layer-segmentation";
+import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCaptureButton, toggleRestartButton} from "./layer-capture";
+import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
+import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
 
@@ -17,16 +17,25 @@ onStartButtonClick(async () => {
 
 onCaptureButtonClick(async () => {
     pauseVideo();
+    toggleCaptureButton();
+
     const blob = await captureVideoFrame();
+    if(!blob) {
+        alert("Failed to capture video frame");
+        return;
+    };
 
-    blob && segmentationRequest(blob).then(async res => {
-        const json = await res.json();
+    await Promise.all([
+        segmentationRequest(blob).then(res => res.json()).then(json => json.imageSegmentationLabels).then(drawSegmentation),
+        imageAnalyzeRequest(blob),
+    ]);
+    
+    toggleRestartButton();
+});
 
-        const [analyze] = await Promise.all([
-            imageAnalyzeRequest(blob),
-            drawSegmentation(json.imageSegmentationLabels),
-        ]);
-
-        console.log(analyze)
-    });
+onRestartButtonClick(() => {
+    toggleRestartButton();
+    clearSegmentationLayer();
+    playVideo();
+    toggleCaptureButton();
 });

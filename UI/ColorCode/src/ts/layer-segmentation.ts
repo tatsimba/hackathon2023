@@ -4,6 +4,10 @@ const ctx = canvas.getContext('2d', {alpha: true});
 
 const worker = new SegmentationWorker();
 
+export const clearSegmentationLayer = () => {
+    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+}
+
 export const drawSegmentation = (segmentation: number[][]) => {
     return new Promise(resolve => {
         worker.postMessage({
