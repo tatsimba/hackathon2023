@@ -99,6 +99,8 @@ def get_segmentation_array(img):
 def get_bbox_for_label(seg_matrix_numpy, label, label_name):
     mask = seg_matrix_numpy == label
     indices = np.argwhere(mask)
+    if(len(indices) == 0):
+        return None
     x_min = np.min(indices[:, 1]).item()
     x_max = np.max(indices[:, 1]).item()
     y_min = np.min(indices[:, 0]).item()
@@ -116,10 +118,12 @@ def get_bbox_for_label(seg_matrix_numpy, label, label_name):
 def get_clothing_boxes(seg_matrix_numpy):
     shirt_label = 4
     pants_label = 6
-    shirt_bbox = get_bbox_for_label(seg_matrix_numpy, shirt_label, 'shirt')
-    pants_bbox = get_bbox_for_label(seg_matrix_numpy, pants_label, 'pants')
+    dress_label = 7
+    shirt_box = get_bbox_for_label(seg_matrix_numpy, shirt_label, 'shirt')
+    pants_box = get_bbox_for_label(seg_matrix_numpy, pants_label, 'pants')
+    dress_box = get_bbox_for_label(seg_matrix_numpy, dress_label, 'dress')
 
-    return [shirt_bbox, pants_bbox]
+    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box]))
 
 
 logger = getLogger()
