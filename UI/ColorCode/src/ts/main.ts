@@ -2,7 +2,7 @@ import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer} from "./layer-capture";
 import {startVideo, pauseVideo, captureVideoFrame} from "./layer-video";
 import {drawSegmentation} from "./layer-segmentation";
-import {sendImage} from "./api";
+import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
 
 onStartButtonClick(async () => {
@@ -19,11 +19,14 @@ onCaptureButtonClick(async () => {
     pauseVideo();
     const blob = await captureVideoFrame();
 
-    blob && sendImage(blob).then(async res => {
+    blob && segmentationRequest(blob).then(async res => {
         const json = await res.json();
 
-        console.time("drawSegmentation");
-        await drawSegmentation(json.imageSegmentationLabels);
-        console.timeEnd("drawSegmentation");
+        const [analyze] = await Promise.all([
+            imageAnalyzeRequest(blob),
+            drawSegmentation(json.imageSegmentationLabels),
+        ]);
+
+        console.log(analyze)
     });
 });
