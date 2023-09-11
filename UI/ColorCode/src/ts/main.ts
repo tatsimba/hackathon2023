@@ -68,8 +68,6 @@ const onStart = async () => {
         alert(e);
     }
 }
-    
-
 
 window.addEventListener("keydown", (e) => {
     if(e.key === "Enter" || e.key === "c") {
