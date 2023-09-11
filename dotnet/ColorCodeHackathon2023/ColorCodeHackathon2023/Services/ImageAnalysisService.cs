@@ -30,10 +30,9 @@ public class ImageAnalysisService : IImageAnalysisService
     public string CreateFirstStepDescribePrompt(string denseCaptions)
     {
         var builder = new StringBuilder();
-        builder.AppendLine($"Image description:\"{denseCaptions}\"");
-        builder.AppendLine("Summarize in 1 sentence what the person is wearing. Specify only out of the following items: ");
-        builder.AppendLine("pants\n\nshirt\n\nshoes\n\ndress\n\nhat\n\nbelt");
-        builder.AppendLine("Format the output as json using the following scheme: { \"pants\": \"pants color\"}. Do not specify cloths that the person is not wearing.");
+        builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
+        builder.AppendLine("Summarize what the person is wearing out of the following items: pants, shirt, shoes, dress, hat and belt"); 
+        builder.AppendLine("Format the output as json using the following scheme: { \"item name \": \"item color\"}. ");
         return builder.ToString();
     }
 }
