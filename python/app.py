@@ -96,8 +96,10 @@ def get_segmentation_array(img):
 
 # Given a matrix of segmentation values, return the bounding box of the shirt
 # Returns a tuple of (upper_x, upper_y, width, height)
-def get_bbox_for_label(seg_matrix_numpy, label, label_name):
-    mask = seg_matrix_numpy == label
+def get_bbox_for_label(seg_matrix_numpy, labels, label_name):
+    mask = seg_matrix_numpy == labels[0]
+    for label in labels[1:]:
+        mask = mask | (seg_matrix_numpy == label)
     indices = np.argwhere(mask)
     if(len(indices) == 0):
         return None
@@ -119,11 +121,18 @@ def get_clothing_boxes(seg_matrix_numpy):
     shirt_label = 4
     pants_label = 6
     dress_label = 7
-    shirt_box = get_bbox_for_label(seg_matrix_numpy, shirt_label, 'shirt')
-    pants_box = get_bbox_for_label(seg_matrix_numpy, pants_label, 'pants')
-    dress_box = get_bbox_for_label(seg_matrix_numpy, dress_label, 'dress')
+    hat_label = 1
+    belt_label = 8
+    left_shoe_label = 9
+    right_shoe_label = 10
+    shirt_box = get_bbox_for_label(seg_matrix_numpy, [shirt_label], 'shirt')
+    pants_box = get_bbox_for_label(seg_matrix_numpy, [pants_label], 'pants')
+    dress_box = get_bbox_for_label(seg_matrix_numpy, [dress_label], 'dress')
+    hat_box = get_bbox_for_label(seg_matrix_numpy, [hat_label], 'hat')
+    belt_box = get_bbox_for_label(seg_matrix_numpy, [belt_label], 'belt')
+    shoes_box = get_bbox_for_label(seg_matrix_numpy, [left_shoe_label, right_shoe_label], 'shoes')
 
-    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box]))
+    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box, hat_box, belt_box, shoes_box]))
 
 
 logger = getLogger()
