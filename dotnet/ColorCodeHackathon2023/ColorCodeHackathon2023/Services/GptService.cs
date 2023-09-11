@@ -28,15 +28,11 @@ public class GptService : IGptService
     {
         var requestData = JsonSerializer.Serialize(new ModelPrompt
         {
-            //Prompt = prompt,
             Messages = { new Message { Content = prompt } },
-            MaxTokens = 100,
-            Temperature = 1,
+            MaxTokens = 1000,
+            Temperature = 0.3,
             TopP = 1,
-            N = 5,
-           // Stream = useSteam,
-           // LogProbs = null,
-           // Stop = useSteam ? "\r\n" : "\n"
+            N = 1
         });
 
         // Available models are listed here: https://msasg.visualstudio.com/QAS/_wiki/wikis/QAS.wiki/134728/Getting-Started-with-Substrate-LLM-API?anchor=available-models
@@ -56,7 +52,8 @@ public class GptService : IGptService
             var responseContent = httpResponse?.Content is not null
                 ? await httpResponse.Content.ReadAsStringAsync()
                 : string.Empty;
-            
+
+            if (!httpResponse?.IsSuccessStatusCode ?? true) return $"Failed to query GPT - {responseContent}";
             var promptFilterResult = JsonSerializer.Deserialize<CompletionResultChat>(responseContent);
             return promptFilterResult?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
         }
