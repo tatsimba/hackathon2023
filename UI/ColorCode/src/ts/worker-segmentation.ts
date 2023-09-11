@@ -21,6 +21,8 @@ const colorMap: {[key: number]: [number, number, number]} = {
     17: [204, 153, 255]   // Scarf (Light Purple)
 };
 
+const OVERLAY_ALPHA = 100;
+
 const drawSegmentation = (width: number, height: number, segmentation: number[][]) => {
     const matrix = new Matrix(width, height);
     const matrixSize = matrix.getSize();
@@ -30,7 +32,7 @@ const drawSegmentation = (width: number, height: number, segmentation: number[][
         if(seg[i / 4] !== 0) continue;
 
         const [r, g, b] = colorMap[Number(seg[i / 4])];
-        matrix.setPixel(i, [r, g, b, 100]);
+        matrix.setPixel(i, [r, g, b, OVERLAY_ALPHA]);
     }
 
     for(let i = 0; i < matrixSize; i += 4) {
@@ -47,10 +49,10 @@ const drawSegmentation = (width: number, height: number, segmentation: number[][
         const bottom = matrix.getPixel(bottomIndex);
 
         const segment = seg[i / 4];
-        const x = left[3] === 100 && segment !== 0;
-        const y = right[3] === 100 && segment !== 0;
-        const z = top[3] === 100 && segment !== 0;
-        const w = bottom[3] === 100 && segment !== 0;
+        const x = left[3] === OVERLAY_ALPHA && segment !== 0;
+        const y = right[3] === OVERLAY_ALPHA && segment !== 0;
+        const z = top[3] === OVERLAY_ALPHA && segment !== 0;
+        const w = bottom[3] === OVERLAY_ALPHA && segment !== 0;
 
         if(x || y || z || w) {
             const color: [number, number, number, number] = [...colorMap[segment], 255];
