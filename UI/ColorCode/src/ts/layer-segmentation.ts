@@ -1,11 +1,21 @@
 import SegmentationWorker from "./worker-segmentation?worker";
-const canvas = document.getElementById('segmentation') as HTMLCanvasElement;
+export const canvas = document.getElementById('segmentation') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d', {alpha: true});
 
 const worker = new SegmentationWorker();
 
+worker.addEventListener("message", (e) => {
+    e.data && requestAnimationFrame(() => {
+        ctx?.clearRect(0, 0, canvas.width, canvas.height);
+
+        if(!e.data?.clear) {
+            ctx?.drawImage(e.data, 0, 0);
+        }
+    });
+});
+
 export const clearSegmentationLayer = () => {
-    ctx?.clearRect(0, 0, canvas.width, canvas.height);
+    worker.postMessage({clear: true});
 }
 
 export const drawSegmentation = (segmentation: number[][]) => {
@@ -16,9 +26,8 @@ export const drawSegmentation = (segmentation: number[][]) => {
             segmentation
         });
 
-        worker.onmessage = (e) => {
-            e.data && ctx?.drawImage(e.data, 0, 0);
-            resolve(Boolean(e.data));
-        };
+        worker.addEventListener("message", (e) => {
+            setTimeout(() => resolve(Boolean(e.data)));
+        });
     });
 }
