@@ -2,10 +2,10 @@ import logging
 from flask import Flask, request, jsonify, render_template
 from PIL import Image
 from transformers import SegformerImageProcessor, AutoModelForSemanticSegmentation
-import matplotlib.pyplot as plt
 import torch.nn as nn
 from flask_compress import Compress
 from flask_cors import CORS
+import numpy as np
 
 app = Flask(__name__)
 app.config["COMPRESS_REGISTER"] = True  # disable default compression of all eligible requests
@@ -50,8 +50,13 @@ def upload():
   image = Image.open(file.stream)
 
   pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
 
-  return jsonify({'msg': 'Image uploaded successfully', 'imageSegmentationLabels': pred_seg.tolist()})
+  return jsonify({
+     'msg': 'Image uploaded successfully',
+     'imageSegmentationLabels': pred_seg.tolist(),
+     'boxes': boxes
+  })
 
 # Create segmentation array
 # Image object should be of type PIL.Image
@@ -88,6 +93,37 @@ def get_segmentation_array(img):
   pred_seg = upsampled_logits.argmax(dim=1)[0]
   print(type(pred_seg))
   return pred_seg.numpy()
+
+# Given a matrix of segmentation values, return the bounding box of the shirt
+# Returns a tuple of (upper_x, upper_y, width, height)
+def get_bbox_for_label(seg_matrix_numpy, label, label_name):
+    mask = seg_matrix_numpy == label
+    indices = np.argwhere(mask)
+    if(len(indices) == 0):
+        return None
+    x_min = np.min(indices[:, 1]).item()
+    x_max = np.max(indices[:, 1]).item()
+    y_min = np.min(indices[:, 0]).item()
+    y_max = np.max(indices[:, 0]).item()
+    width = abs(x_max - x_min)
+    height = abs(y_max - y_min)
+    return {
+        'label': label_name,
+        'x': x_min,
+        'y': y_min,
+        'w': width,
+        'h': height
+    }
+
+def get_clothing_boxes(seg_matrix_numpy):
+    shirt_label = 4
+    pants_label = 6
+    dress_label = 7
+    shirt_box = get_bbox_for_label(seg_matrix_numpy, shirt_label, 'shirt')
+    pants_box = get_bbox_for_label(seg_matrix_numpy, pants_label, 'pants')
+    dress_box = get_bbox_for_label(seg_matrix_numpy, dress_label, 'dress')
+
+    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box]))
 
 
 logger = getLogger()
