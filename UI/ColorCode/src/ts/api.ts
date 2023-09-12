@@ -24,7 +24,6 @@ export const imageAnalyzeRequest = (image: Blob, filename=`image.${VITE_IMAGE_TY
     });
 }
 
-
 export const downloadImage = (image: Blob, filename=`image.${VITE_IMAGE_TYPE}`) => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(image);

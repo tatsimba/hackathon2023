@@ -30,7 +30,7 @@ const onCapture = async () => {
     
         drawSegmentation(segmentation.imageSegmentationLabels);
     
-        const results = JSON.parse(analyze.result);
+        const results = JSON.parse(analyze.garmentColorResult);
         const positions = segmentation.boxes;
     
         for(const pos of positions) {
