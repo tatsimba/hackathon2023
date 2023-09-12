@@ -54,7 +54,7 @@ def upload():
 
   return jsonify({
      'msg': 'Image uploaded successfully',
-     'imageSegmentationLabels': pred_seg.tolist(),
+    #  'imageSegmentationLabels': pred_seg.tolist(),
      'boxes': boxes
   })
 
@@ -131,8 +131,17 @@ def get_clothing_boxes(seg_matrix_numpy):
     hat_box = get_bbox_for_label(seg_matrix_numpy, [hat_label], 'hat')
     belt_box = get_bbox_for_label(seg_matrix_numpy, [belt_label], 'belt')
     shoes_box = get_bbox_for_label(seg_matrix_numpy, [left_shoe_label, right_shoe_label], 'shoes')
+    upper_clothing_box = get_bbox_for_label(seg_matrix_numpy, [dress_label, shirt_label], 'upper_clothing')
 
-    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box, hat_box, belt_box, shoes_box]))
+    if(dress_box is not None and shirt_box is not None):
+        dress_area = dress_box['w'] * dress_box['h']
+        shirt_area = shirt_box['w'] * shirt_box['h']
+        if(dress_area > shirt_area):
+            shirt_box = None        
+        else:
+            dress_box = None
+
+    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box, hat_box, belt_box, shoes_box, upper_clothing_box]))
 
 
 logger = getLogger()
