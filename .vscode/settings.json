@@ -30,5 +30,6 @@
     "venv.bak{,/**}",
     ".vscode{,/**}"
   ],
-  "appService.defaultWebAppToDeploy": "None"
+  "appService.defaultWebAppToDeploy": "None",
+  "sarif-viewer.connectToGithubCodeScanning": "off"
 }
