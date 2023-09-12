@@ -215,8 +215,7 @@ def get_captions_in_parallel(boxes, image, show=False):
         plt.imshow(image)
         plt.show()
     
-    cropped_left_shoe = get_cropped_image(image, boxes, 'left_shoe', show)
-    cropped_right_shoe = get_cropped_image(image, boxes, 'right_shoe', show)
+    cropped_shoes = get_cropped_image(image, boxes, 'shoes', show)
     cropped_upper_clothing = get_cropped_image(image, boxes, 'upper_clothing', show)
     cropped_pants = get_cropped_image(image, boxes, 'pants', show)
     cropped_hat = get_cropped_image(image, boxes, 'hat', show)
@@ -224,18 +223,18 @@ def get_captions_in_parallel(boxes, image, show=False):
     
     # Define a list of caption tasks to run in parallel
     caption_tasks = [
-        (cropped_left_shoe, 'shoe color is '),
-        (cropped_left_shoe, ''),
-        (cropped_right_shoe, 'shoe color is '),
-        (cropped_right_shoe, ''),
-        (cropped_upper_clothing, 'Upper clothing color is '),
-        (cropped_upper_clothing, ''),
-        (cropped_pants, 'Pants color is '),
-        (cropped_pants, ''),
-        (cropped_hat, 'Hat color is '),
-        (cropped_hat, ''),
-        (cropped_belt, 'Belt color is '),
-        (cropped_belt, '')
+        (cropped_shoes, 'The shoes colors are '),
+        (cropped_shoes, 'The shoes are '),
+        (cropped_upper_clothing, 'The upper clothing color is '),
+        (cropped_upper_clothing, 'The upper clothing is '),
+        (cropped_pants, 'The pants color is '),
+        (cropped_pants, 'The pants are '),
+        (cropped_hat, 'The hat color is '),
+        (cropped_hat, 'The hat is '),
+        (cropped_belt, 'The belt color is '),
+        (cropped_belt, 'The belt is '),
+        (image, 'The person is wearing '),
+        (image, 'The person is '),
     ]
 
     captions = []
