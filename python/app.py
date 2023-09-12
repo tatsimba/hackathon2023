@@ -79,6 +79,7 @@ def captions():
 
 
 @app.route('/segmentation', methods=['POST'])
+@compress.compressed()
 def segmentation():
   if 'image' not in request.files:
     return 'No file uploaded', 400
