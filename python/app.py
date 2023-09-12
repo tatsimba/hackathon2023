@@ -2,10 +2,12 @@ import logging
 from flask import Flask, request, jsonify, render_template
 from PIL import Image
 from transformers import SegformerImageProcessor, AutoModelForSemanticSegmentation
+from transformers import BlipProcessor, BlipForConditionalGeneration
 import torch.nn as nn
 from flask_compress import Compress
 from flask_cors import CORS
 import numpy as np
+import concurrent.futures
 
 app = Flask(__name__)
 app.config["COMPRESS_REGISTER"] = True  # disable default compression of all eligible requests
@@ -51,11 +53,13 @@ def upload():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
+  captions = get_captions_in_parallel(boxes, image)
 
   return jsonify({
      'msg': 'Image uploaded successfully',
-    #  'imageSegmentationLabels': pred_seg.tolist(),
-     'boxes': boxes
+     'imageSegmentationLabels': pred_seg.tolist(),
+     'boxes': boxes,
+     'captions': captions
   })
 
 # Create segmentation array
@@ -131,6 +135,8 @@ def get_clothing_boxes(seg_matrix_numpy):
     hat_box = get_bbox_for_label(seg_matrix_numpy, [hat_label], 'hat')
     belt_box = get_bbox_for_label(seg_matrix_numpy, [belt_label], 'belt')
     shoes_box = get_bbox_for_label(seg_matrix_numpy, [left_shoe_label, right_shoe_label], 'shoes')
+    left_shoe_box = get_bbox_for_label(seg_matrix_numpy, [left_shoe_label], 'left_shoe')
+    right_shoe_box = get_bbox_for_label(seg_matrix_numpy, [right_shoe_label], 'right_shoe')
     upper_clothing_box = get_bbox_for_label(seg_matrix_numpy, [dress_label, shirt_label], 'upper_clothing')
 
     if(dress_box is not None and shirt_box is not None):
@@ -141,7 +147,76 @@ def get_clothing_boxes(seg_matrix_numpy):
         else:
             dress_box = None
 
-    return list(filter(lambda x: x is not None, [shirt_box, pants_box, dress_box, hat_box, belt_box, shoes_box, upper_clothing_box]))
+    return list(filter(lambda x: x is not None, 
+        [shirt_box, pants_box, dress_box, hat_box, belt_box, shoes_box, upper_clothing_box, left_shoe_box, right_shoe_box]))
+
+def first(iterable, condition = lambda x: True):
+    items = list(filter(condition, iterable))
+    return items[0] if len(items) > 0 else None
+
+caption_processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-large")
+caption_model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-large")
+
+def get_caption(cropped_image, prompt, preprocessed_image=None):
+    if(cropped_image is None):
+        return None
+    inputs = caption_processor(cropped_image, prompt, return_tensors="pt") if preprocessed_image is None else preprocessed_image
+    out = caption_model.generate(**inputs)
+    text = caption_processor.decode(out[0], skip_special_tokens=True)
+    return text
+
+def get_cropped_image(image, boxes, label, show=False):
+    box = first(boxes, lambda x: x['label'] == label)
+    if(box is None):
+        return None
+    cropped_image = image.crop((box['x'], box['y'], box['x'] + box['w'], box['y'] + box['h']))
+    if(show):
+        plt.imshow(cropped_image)
+        plt.show()
+    return cropped_image
+
+
+def get_captions_in_parallel(boxes, image, show=False):
+    if(show):
+        plt.imshow(image)
+        plt.show()
+    
+    cropped_left_shoe = get_cropped_image(image, boxes, 'left_shoe', show)
+    cropped_right_shoe = get_cropped_image(image, boxes, 'right_shoe', show)
+    cropped_upper_clothing = get_cropped_image(image, boxes, 'upper_clothing', show)
+    cropped_pants = get_cropped_image(image, boxes, 'pants', show)
+    cropped_hat = get_cropped_image(image, boxes, 'hat', show)
+    cropped_belt = get_cropped_image(image, boxes, 'belt', show)
+    
+    # Define a list of caption tasks to run in parallel
+    caption_tasks = [
+        (cropped_left_shoe, 'shoe color is '),
+        (cropped_left_shoe, ''),
+        (cropped_right_shoe, 'shoe color is '),
+        (cropped_right_shoe, ''),
+        (cropped_upper_clothing, 'Upper clothing color is '),
+        (cropped_upper_clothing, ''),
+        (cropped_pants, 'Pants color is '),
+        (cropped_pants, ''),
+        (cropped_hat, 'Hat color is '),
+        (cropped_hat, ''),
+        (cropped_belt, 'Belt color is '),
+        (cropped_belt, '')
+    ]
+
+    captions = []
+
+    # Use ThreadPoolExecutor to run caption tasks in parallel
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        caption_results = [executor.submit(get_caption, cropped_image, prompt) for cropped_image, prompt in caption_tasks]
+    
+    # Retrieve the results from the caption tasks
+    for result in concurrent.futures.as_completed(caption_results):
+        caption = result.result()
+        if caption is not None:
+            captions.append(caption)
+
+    return captions
 
 
 logger = getLogger()
