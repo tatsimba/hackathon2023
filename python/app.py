@@ -84,7 +84,11 @@ def captions():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing colors']}})
+  captions = get_captions_in_parallel(boxes, image, {
+    'upper_clothing': {'prompts': ['Upper clothing colors', 'In 4 words max the upper clothing can be described']},
+    'pants': {'prompts': ['Pants main color', 'In 4 words max the pants can be described']},
+    'shoes': {'prompts': ['Shoes main color is']}
+  })
 
   return jsonify({
      'boxes': boxes,
@@ -100,7 +104,7 @@ def captions_upper_clothing():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing main color']}})
+  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing main color', 'In 4 words max the upper clothing can be described']}})
 
   return jsonify({
      'captions': captions
@@ -115,7 +119,7 @@ def captions_pants():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image, {'pants': {'prompts': ['Pants main color']}})
+  captions = get_captions_in_parallel(boxes, image, {'pants': {'prompts': ['Pants main color', 'In 4 words max the pants can be described']}})
 
   return jsonify({
      'captions': captions
