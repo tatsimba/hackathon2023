@@ -8,7 +8,7 @@ using Settings;
 
 public interface IGptService
 {
-    Task<string> RunPromptAsync(string prompt, bool useSteam = false);
+    Task<(string, bool)> RunPromptAsync(string prompt, bool useSteam = false);
 }
 
 public class GptService : IGptService
@@ -24,7 +24,7 @@ public class GptService : IGptService
         _apiKey = openAiSettings.Value.ApiKey;
     }
 
-    public async Task<string> RunPromptAsync(string prompt, bool useSteam = false)
+    public async Task<(string, bool)> RunPromptAsync(string prompt, bool useSteam = false)
     {
         var requestData = JsonSerializer.Serialize(new ModelPrompt
         {
@@ -39,7 +39,7 @@ public class GptService : IGptService
         return useSteam ? await SendStreamRequest(requestData) : await SendRequest(requestData);
     }
 
-    private async Task<string> SendRequest(string requestData)
+    private async Task<(string, bool)> SendRequest(string requestData)
     {
         var httpClient = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Post, string.Format(CompletionsUriPath, _endpoint));
@@ -49,13 +49,13 @@ public class GptService : IGptService
         try
         {
             var httpResponse = await httpClient.SendAsync(request);
-            var responseContent = httpResponse?.Content is not null
+            var responseContent = httpResponse.Content is not null
                 ? await httpResponse.Content.ReadAsStringAsync()
                 : string.Empty;
 
-            if (!httpResponse?.IsSuccessStatusCode ?? true) return $"Failed to query GPT - {responseContent}";
+            if (!httpResponse?.IsSuccessStatusCode ?? true) return ($"Failed to query GPT - {responseContent}", false);
             var promptFilterResult = JsonSerializer.Deserialize<CompletionResultChat>(responseContent);
-            return promptFilterResult?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
+            return (promptFilterResult?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty, true);
         }
         catch (Exception e)
         {
@@ -64,7 +64,7 @@ public class GptService : IGptService
         }
     }
 
-    private async Task<string> SendStreamRequest(string requestData)
+    private async Task<(string, bool)> SendStreamRequest(string requestData)
     {
         var httpClient = new HttpClient();
         var request = new HttpRequestMessage(HttpMethod.Post, string.Format(CompletionsUriPath, _endpoint));
@@ -91,11 +91,11 @@ public class GptService : IGptService
                 if (result?.Choices?.Count > 0)
                 {
                     Console.Write(result.Choices[0].Text);
-                    return result.Choices[0].Text ?? string.Empty;
+                    return (result.Choices[0].Text ?? string.Empty, true);
                 }
             }
         }
 
-        return string.Empty;
+        return (string.Empty, true);
     }
 }

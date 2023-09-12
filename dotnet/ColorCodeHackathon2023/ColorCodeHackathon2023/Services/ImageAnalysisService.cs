@@ -46,7 +46,8 @@ public class ImageAnalysisService : IImageAnalysisService
         var weatherTask = _gptService.RunPromptAsync(CreateWeatherPrompt(denseCaptionStr));
         var matchingColorTask = _gptService.RunPromptAsync(CreateMatchingColorPrompt(denseCaptionStr));
         Task.WaitAll(garmentColorTask, weatherTask, matchingColorTask);
-        return new ImageAnalysisResult {GarmentColorResult = garmentColorTask.Result, MatchingColorResult = matchingColorTask.Result, WeatherResult = weatherTask.Result, DenseCaptions = denseCaptionsAll };
+        bool success = garmentColorTask.Result.Item2 && weatherTask.Result.Item2 && matchingColorTask.Result.Item2;
+        return new ImageAnalysisResult {Success = success, GarmentColorResult = garmentColorTask.Result.Item1, MatchingColorResult = matchingColorTask.Result.Item1, WeatherResult = weatherTask.Result.Item1, DenseCaptions = denseCaptionsAll };
     }
 
     public string CreateGarmentColorPrompt(string denseCaptions)
