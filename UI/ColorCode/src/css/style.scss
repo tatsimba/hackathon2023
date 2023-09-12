@@ -84,13 +84,21 @@ canvas {
   }
 }
 
-
 #layer-data {
   padding: 3rem; 
   overflow: hidden;
 
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 3rem;
+  }
+
   #match-response {
     display: flex;
+    align-items: flex-start;
     gap: 3rem;
 
     &.perfect-match {
@@ -112,36 +120,33 @@ canvas {
       font-size: 2rem;
       justify-content: center;
       align-items: center;
+      text-wrap: nowrap;
   
       img {
         width: 12rem;
       }
     }
 
-    .match-content {
+    #match-toggle-area {
       padding: 2rem;
       box-sizing: border-box;
       border: 5px solid black;
       border-radius: 2rem;
-      max-width: 60%;
-      display: flex;
-      align-items: flex-start;
-      gap: 2rem;
       background-color: rgba(255,255,255,0.8);
-
-      img {
-        width: 5rem;
-      }
-
-      .title {
-        font-weight: 500;
-        font-size: 2rem;
-        padding: 0 0 .5rem 0;
-      }
-
-      .content {
-        font-size: 1.5rem;
-      }
+      font-size: 1.5rem;
     }
+  }
+}
+
+.rotate-animation {
+  animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+      transform: rotate(0deg);
+  }
+  100% {
+      transform: rotate(360deg);
   }
 }

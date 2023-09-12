@@ -4,7 +4,6 @@ const layer = document.getElementById("layer-data");
 const matchResponse = document.getElementById("match-response");
 const toggleMatchResponseBtn = matchResponse?.querySelector("#toggle-match-response");
 const matchToggleArea = matchResponse?.querySelector("#match-toggle-area");
-const matchResponseContent = matchToggleArea?.querySelector(".content");
 
 toggleMatchResponseBtn?.addEventListener("click", () => {
     matchToggleArea?.classList.toggle("hide");
@@ -56,6 +55,6 @@ export const setMatchResponse = (isMatch: boolean, response: string) => {
         matchResponse?.classList.add("swap-outfit");
     }
 
-    matchResponseContent!.textContent = response;
+    matchToggleArea!.textContent = response;
 }
 

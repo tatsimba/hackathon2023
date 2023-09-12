@@ -20,27 +20,25 @@
       <button id="btn-capture" class="btn btn-image">
         <img src="./public/pic.png" class="img-capture" alt="Capture" />
       </button>
-      <!-- <button id="btn-restart" class="btn middle-center hide">Restart</button> -->
     </div>
     <div id="layer-data" class="layer hide">
-      <div id="match-response">
-        <button id="toggle-match-response" class="btn btn-image">
-          <img src="./public/how.png" alt="How do I look?" />
-          How do I look?
-        </button>
-        <div id="match-toggle-area" class="match-content hide">
-          <img src="./public/perfect-match.png" class="perfect-match" alt="Perfect match">
-          <img src="./public/swap-outfit.png" class="swap-outfit" alt="Swap outfit">
-          <div id="match-response-text">
-              <div class="title perfect-match">
-                Perfect match
-              </div>
-              <div class="title swap-outfit">
-                Swap outfit
-              </div>
-              <div class="content"></div>
-          </div>
+      <div class="top-row">
+        <div id="match-response">
+          <button id="toggle-match-response" class="btn btn-image">
+            <img src="./public/perfect-match.png" class="perfect-match rotate-animation" alt="Perfect match">
+            <img src="./public/swap-outfit.png" class="swap-outfit rotate-animation" alt="Swap outfit">
+            <div class="perfect-match">
+              Perfect match
+            </div>
+            <div class="swap-outfit">
+              Swap outfit
+            </div>
+          </button>
+          <div id="match-toggle-area" class="match-content hide"></div>
         </div>
+        <button id="btn-restart" class="btn btn-image middle-center hide">
+          <img src="./public/X.svg" class="img-restart" alt="Restart" />
+        </button>
       </div>
     </div>
     <div id="layer-start" class="layer">
