@@ -5,11 +5,10 @@ using Azure.AI.Vision.ImageAnalysis;
 using Azure;
 using Microsoft.Extensions.Options;
 using Settings;
-using System.Text;
 
 public interface IVisionService
 {
-    List<string> AnalyzeDenseCaptions(string imageFile);
+    Task<List<string>> AnalyzeDenseCaptions(string imageFile);
 }
 
 public class VisionService : IVisionService
@@ -31,11 +30,11 @@ public class VisionService : IVisionService
         _visionServiceOptions = new VisionServiceOptions(endpoint, new AzureKeyCredential(apiKey));
     }
 
-    public List<string> AnalyzeDenseCaptions(string imageFile)
+    public async Task<List<string>> AnalyzeDenseCaptions(string imageFile)
     {
         var visionSource = VisionSource.FromFile(imageFile);
         using var analyzer = new ImageAnalyzer(_visionServiceOptions, visionSource, ImageAnalysisOptions);
-        var imageAnalysisResult = analyzer.Analyze();
+        var imageAnalysisResult = await analyzer.AnalyzeAsync();
         var result = new List<string>();
 
         if (imageAnalysisResult.Reason == ImageAnalysisResultReason.Analyzed)
