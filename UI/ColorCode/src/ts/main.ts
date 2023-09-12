@@ -3,6 +3,7 @@ import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCaptureButton, toggleRestartButton} from "./layer-capture";
 import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
 import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
+import {toggleLoadingLayer} from "./layer-loading";
 import {createLabel, hideDataLayer, setMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
@@ -20,6 +21,7 @@ const onCapture = async () => {
     try {
         pauseVideo();
         toggleCaptureButton();
+        toggleLoadingLayer();
     
         const blob = await captureVideoFrame();
     
@@ -40,7 +42,8 @@ const onCapture = async () => {
 
         // TODO: using labels from API response
         // TODO: segmentation labels numbers should be mapped to other API's labels response
-        drawSegmentation([11], segmentation.imageSegmentationLabels);
+        await drawSegmentation([11], segmentation.imageSegmentationLabels);
+        toggleLoadingLayer();
 
         isMatching && jsConfetti.addConfetti();
     

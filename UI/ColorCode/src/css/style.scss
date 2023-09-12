@@ -48,10 +48,19 @@ canvas {
   display: none !important; 
 }
 
+#layer-loading,
 #layer-start {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#layer-loading {
+  background-color: rgba(255,255,255,0.3);
+  
+  img {
+    width: 30%;
+  }
 }
 
 #segmentation,
@@ -153,5 +162,16 @@ canvas {
   }
   100% {
     transform: rotate(-360deg);
+  }
+}
+
+.loader-animation {
+  animation: loader 5s linear infinite;
+}
+
+
+@keyframes loader {
+  90% {
+    filter: saturate(10);
   }
 }
