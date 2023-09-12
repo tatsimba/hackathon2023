@@ -48,7 +48,6 @@ def upload():
   if 'image' not in request.files:
     return 'No file uploaded', 400
   file = request.files['image']
-  # file.save('im-received.jpg')
   image = Image.open(file.stream)
 
   pred_seg = get_segmentation_array(image)
@@ -58,26 +57,6 @@ def upload():
      'imageSegmentationLabels': pred_seg.tolist(),
      'boxes': boxes
   })
-
-
-@app.route('/captions', methods=['POST'])
-def captions():
-  if 'image' not in request.files:
-    return 'No file uploaded', 400
-  file = request.files['image']
-  # file.save('im-received.jpg')
-  image = Image.open(file.stream)
-
-  pred_seg = get_segmentation_array(image)
-  boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing colors']}})
-
-  return jsonify({
-     'boxes': boxes,
-     'captions': captions
-  })
-
-
 
 @app.route('/segmentation', methods=['POST'])
 @compress.compressed()
@@ -94,6 +73,67 @@ def segmentation():
   return jsonify({
      'boxes': boxes,
      'imageSegmentationLabels': pred_seg.tolist()
+  })
+
+@app.route('/captions', methods=['POST'])
+def captions():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
+  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing colors']}})
+
+  return jsonify({
+     'boxes': boxes,
+     'captions': captions
+  })
+
+@app.route('/captions/upper_clothing', methods=['POST'])
+def captions_upper_clothing():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
+  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing main color']}})
+
+  return jsonify({
+     'captions': captions
+  })
+
+@app.route('/captions/pants', methods=['POST'])
+def captions_pants():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
+  captions = get_captions_in_parallel(boxes, image, {'pants': {'prompts': ['Pants main color']}})
+
+  return jsonify({
+     'captions': captions
+  })
+
+@app.route('/captions/shoes', methods=['POST'])
+def captions_shoes():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
+  captions = get_captions_in_parallel(boxes, image, {'shoes': {'prompts': ['Shoes main color is']}})
+
+  return jsonify({
+     'captions': captions
   })
 
 
