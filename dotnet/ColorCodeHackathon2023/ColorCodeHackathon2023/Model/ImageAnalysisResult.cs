@@ -15,4 +15,7 @@ public class ImageAnalysisResult
 
     [JsonPropertyName("denseCaptions")]
     public List<string> DenseCaptions { get; set; }
+
+    [JsonPropertyName("success")]
+    public bool Success { get; set; } = true;
 }
