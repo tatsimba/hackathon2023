@@ -27,8 +27,6 @@ const onCapture = async () => {
             segmentationRequest(blob!).then(res => res.json()),
             imageAnalyzeRequest(blob!).then(res => res.json()),
         ]);
-    
-        drawSegmentation(segmentation.imageSegmentationLabels);
 
         if(!analyze.success) {
             throw new Error("Failed to analyze image pls try again in 30s");
@@ -39,6 +37,10 @@ const onCapture = async () => {
         const positions = segmentation.boxes;
 
         const isMatching = matchingColorResult.matching === "matching";
+
+        // TODO: using labels from API response
+        // TODO: segmentation labels numbers should be mapped to other API's labels response
+        drawSegmentation([11], segmentation.imageSegmentationLabels);
 
         isMatching && jsConfetti.addConfetti();
     
@@ -83,15 +85,6 @@ const onStart = async () => {
         alert(e);
     }
 }
-
-window.addEventListener("keydown", (e) => {
-    if(e.key === "Enter" || e.key === "c") {
-        onCapture();
-    
-    } else if(e.key === "Escape" || e.key === "r") {
-        onRestart();
-    }
-});
 
 onCaptureButtonClick(onCapture);
 onRestartButtonClick(onRestart);

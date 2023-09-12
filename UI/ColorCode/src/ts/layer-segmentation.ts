@@ -18,12 +18,13 @@ export const clearSegmentationLayer = () => {
     worker.postMessage({clear: true});
 }
 
-export const drawSegmentation = (segmentation: number[][]) => {
+export const drawSegmentation = (labels: number[], segmentation: number[][]) => {
     return new Promise(resolve => {
         worker.postMessage({
             width: canvas.width,
             height: canvas.height,
-            segmentation
+            segmentation,
+            labels,
         });
 
         worker.addEventListener("message", (e) => {

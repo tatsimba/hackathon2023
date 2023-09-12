@@ -26,7 +26,7 @@ export const createLabel = (key: string, label: string, x: number, y: number) =>
     const {x: rX, y: rY} = posLabel(x, y)
     const labelElement = document.createElement("div");
     labelElement.classList.add("data-label");
-    labelElement.textContent = `${key}: ${label}`;
+    labelElement.textContent = `${label} ${key}`;
     labelElement.style.left = `${rX}px`;
     labelElement.style.top = `${rY}px`;
     layer?.appendChild(labelElement);

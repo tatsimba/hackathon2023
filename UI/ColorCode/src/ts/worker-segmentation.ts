@@ -1,87 +1,42 @@
-import {Matrix} from "./matrix";
+const PATTERN_SIZE = 9;
 
-const colorMap: {[key: number]: [number, number, number]} = {
-    0: [230, 184, 175],   // Background (Light Reddish)
-    1: [255, 200, 128],   // Hat (Orange)
-    2: [145, 211, 199],   // Hair (Turquoise)
-    3: [105, 176, 231],   // Sunglasses (Light Blue)
-    4: [255, 214, 102],   // Upper-clothes (Yellow)
-    5: [255, 153, 204],   // Skirt (Pink)
-    6: [153, 255, 204],   // Pants (Light Green)
-    7: [192, 192, 192],   // Dress (Gray)
-    8: [255, 102, 102],   // Belt (Red)
-    9: [102, 102, 255],   // Left-shoe (Blue)
-    10: [255, 204, 153],  // Right-shoe (Light Orange)
-    11: [230, 128, 255],  // Face (Lavender)
-    12: [102, 255, 102],  // Left-leg (Bright Green)
-    13: [153, 102, 51],   // Right-leg (Brown)
-    14: [102, 102, 102],  // Left-arm (Dark Gray)
-    15: [204, 204, 0],    // Right-arm (Dark Yellow)
-    16: [128, 128, 255],  // Bag (Light Blue)
-    17: [204, 153, 255]   // Scarf (Light Purple)
-};
+const pattern = (pos = 0) => {
+    const size = PATTERN_SIZE;
+    const ptr = new OffscreenCanvas(size, size)!;
+    const ctx = ptr.getContext('2d')!;
+     
+    ctx.fillStyle = "white";
 
-const OVERLAY_ALPHA = 100;
+    const y = size / 3; 
+    const x = 3 + pos % size;
+ 
+    ctx.fillRect(x, x, y, y); 
 
-const drawSegmentation = (width: number, height: number, segmentation: number[][]) => {
-    const matrix = new Matrix(width, height);
-    const matrixSize = matrix.getSize();
-    const seg = segmentation.flat(2);
+    return ctx.createPattern(ptr, 'repeat')!;
+}
 
-    for(let i = 0; i < matrixSize; i += 4) {
-        if(seg[i / 4] !== 0) continue;
+const drawPattern = (labels: number[], width: number, height: number, segmentation: number[][], pos: number) => {
+    const ptr = pattern(pos);
+    const canvas = new OffscreenCanvas(width, height)!;
+    const ctx = canvas.getContext('2d')!;
 
-        const [r, g, b] = colorMap[Number(seg[i / 4])];
-        matrix.setPixel(i, [r, g, b, OVERLAY_ALPHA]);
-    }
-
-    for(let i = 0; i < matrixSize; i += 4) {
-        const leftIndex = matrix.getLeftPixelIndex(i);
-        const left = matrix.getPixel(leftIndex);
-
-        const rightIndex = matrix.getRightPixelIndex(i);
-        const right = matrix.getPixel(rightIndex);
-
-        const topIndex = matrix.getTopPixelIndex(i);
-        const top = matrix.getPixel(topIndex);
-
-        const bottomIndex = matrix.getBottomPixelIndex(i);
-        const bottom = matrix.getPixel(bottomIndex);
-
-        const segment = seg[i / 4];
-        const x = left[3] === OVERLAY_ALPHA && segment !== 0;
-        const y = right[3] === OVERLAY_ALPHA && segment !== 0;
-        const z = top[3] === OVERLAY_ALPHA && segment !== 0;
-        const w = bottom[3] === OVERLAY_ALPHA && segment !== 0;
-
-        if(x || y || z || w) {
-            // random rgba color
-            const rgb = [...Array(3)].map(() => Math.floor(Math.random() * 45) + 210) as [number, number, number];
-
-            // const color: [number, number, number, number] = [...colorMap[segment], 255];
-            const color: [number, number, number, number] = [...rgb, 255];
-
-            matrix.setPixel(i, color);
-            matrix.setPixel(leftIndex, color);
-            matrix.setPixel(rightIndex, color);
-            matrix.setPixel(topIndex, color);
-            matrix.setPixel(bottomIndex, color);
+    for(let i = 0; i < segmentation.length; i++) {
+        for(let j = 0; j < segmentation[i].length; j++) {
+            if(labels.includes(segmentation[i][j])) {                
+                ctx.fillStyle = ptr;
+                ctx.fillRect(j, i, 1, 1);
+            }
         }
     }
 
-    const offscreen = new OffscreenCanvas(width, height);
-    const offscreenContext = offscreen.getContext('2d');
-
-    const segImg = offscreenContext?.createImageData(width, height);
-    segImg?.data.set(matrix.getMatrix());
-    segImg && offscreenContext?.putImageData(segImg, 0, 0);
-    return offscreen;
-};
+    return canvas;
+}
 
 let animationFrameID: number;
 
 self.addEventListener("message", (e) => {
-    const {width, height, segmentation, clear = false} = e.data;
+    const {width, height, segmentation, labels, clear = false} = e.data;
+    let pos = 0;
 
     if(clear) {
         cancelAnimationFrame(animationFrameID);
@@ -90,9 +45,9 @@ self.addEventListener("message", (e) => {
     }
     
     const draw = () => {
-        const offscreen = drawSegmentation(width, height, segmentation);
+        const offscreen = drawPattern(labels, width, height, segmentation, pos);
         self.postMessage(offscreen.transferToImageBitmap());   
-
+        pos = ++pos % PATTERN_SIZE;
         animationFrameID = requestAnimationFrame(draw);
     }
 
