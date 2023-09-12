@@ -1,34 +1,52 @@
 ﻿namespace ColorCodeHackathon2023.Services;
 
+using System.Linq;
 using System.Text;
 using Model;
 
 public interface IImageAnalysisService
 {
-    Task<ImageAnalysisResult> AnalyzeImageAsync(string imageFile);
+    Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image);
 }
 
 public class ImageAnalysisService : IImageAnalysisService
 {
     private readonly IVisionService _visionService;
+    private readonly IVisionPythonService _visionPythonService;
     private readonly IGptService _gptService;
     private static readonly string Garments = "pants, shirt, shoes, dress, hat, coat, jacket, scarf, shorts and belt";
-    public ImageAnalysisService(IVisionService visionService, IGptService gptService)
+    public ImageAnalysisService(IVisionService visionService, IGptService gptService, IVisionPythonService visionPythonService)
     {
         _visionService = visionService;
         _gptService = gptService;
+        _visionPythonService = visionPythonService;
     }
 
-    public async Task<ImageAnalysisResult> AnalyzeImageAsync(string imageFile)
+    public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image)
     {
+        var imageTempFile = Path.GetTempFileName();
+        Console.WriteLine("Using " + imageTempFile);
+        await image.OpenReadStream().CopyToAsync(new FileStream(imageTempFile, FileMode.Open));
+
         // 1) get the dense captions
-        var denseCaptions = _visionService.AnalyzeDenseCaptions(imageFile);
+        var denseCaptionsTask = _visionService.AnalyzeDenseCaptions(imageTempFile);
+        var densePythonCaptionsUpperClothingTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "upper_clothing");
+        var densePythonCaptionsUpperShoesTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "shoes");
+        var densePythonCaptionsUpperPantsTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile,"pants");
+        Task.WaitAll(denseCaptionsTask, densePythonCaptionsUpperClothingTask, densePythonCaptionsUpperShoesTask, densePythonCaptionsUpperPantsTask);
+        var denseCaptionsAll = denseCaptionsTask.Result
+            .Concat(densePythonCaptionsUpperClothingTask.Result)
+            .Concat(densePythonCaptionsUpperShoesTask.Result)
+            .Concat(densePythonCaptionsUpperPantsTask.Result)
+            .Distinct().ToList();
+        var denseCaptionStr= string.Join(", ", denseCaptionsAll);
+
         //2) analyze with GPT
-        var garmentColorTask = _gptService.RunPromptAsync(CreateGarmentColorPrompt(string.Join(Environment.NewLine, denseCaptions)));
-        var weatherTask = _gptService.RunPromptAsync(CreateWeatherPrompt(string.Join(Environment.NewLine, denseCaptions)));
-        var matchingColorTask = _gptService.RunPromptAsync(CreateMatchingColorPrompt(string.Join(Environment.NewLine, denseCaptions)));
+        var garmentColorTask = _gptService.RunPromptAsync(CreateGarmentColorPrompt(denseCaptionStr));
+        var weatherTask = _gptService.RunPromptAsync(CreateWeatherPrompt(denseCaptionStr));
+        var matchingColorTask = _gptService.RunPromptAsync(CreateMatchingColorPrompt(denseCaptionStr));
         Task.WaitAll(garmentColorTask, weatherTask, matchingColorTask);
-        return new ImageAnalysisResult {GarmentColorResult = garmentColorTask.Result, MatchingColorResult = matchingColorTask.Result, WeatherResult = weatherTask.Result, DenseCaptions = denseCaptions};
+        return new ImageAnalysisResult {GarmentColorResult = garmentColorTask.Result, MatchingColorResult = matchingColorTask.Result, WeatherResult = weatherTask.Result, DenseCaptions = denseCaptionsAll };
     }
 
     public string CreateGarmentColorPrompt(string denseCaptions)
@@ -60,10 +78,7 @@ public class ImageAnalysisService : IImageAnalysisService
     {
         var builder = new StringBuilder();
         builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
-        //builder.AppendLine("Act as an assistant to the color blind.");
         builder.AppendLine("Note what the person in the image description is wearing.");
-        //builder.AppendLine("Make sure to pay extra attention to the style and color of the shirt, pants and shoes.");
-        //builder.AppendLine("If any of the above items is missing then please ignore it.");
         builder.AppendLine("Does the clothes which the person is wearing fits well in terms of color?");
         builder.AppendLine("Write the response in json format of tree fields:");
         builder.AppendLine("First field name is 'result' and explains in 1 short and concise sentence");

@@ -17,6 +17,7 @@ public static class StartupExtensions
         services.AddSingleton<IImageAnalysisService, ImageAnalysisService>();
         services.AddSingleton<IGptService, GptService>();
         services.AddSingleton<IVisionService, VisionService>();
+        services.AddSingleton<IVisionPythonService, VisionPythonService>();
     }
 
     public static void ConfigureAuthorization(this IServiceCollection services, IConfiguration configuration)
