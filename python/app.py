@@ -70,12 +70,13 @@ def captions():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image)
+  captions = get_captions_in_parallel(boxes, image, {'upper_clothing': {'prompts': ['Upper clothing colors']}})
 
   return jsonify({
      'boxes': boxes,
      'captions': captions
   })
+
 
 
 @app.route('/segmentation', methods=['POST'])
@@ -210,32 +211,16 @@ def get_cropped_image(image, boxes, label, show=False):
     return cropped_image
 
 
-def get_captions_in_parallel(boxes, image, show=False):
+def get_captions_in_parallel(boxes, image, cropping_plan={}, show=False):
     if(show):
         plt.imshow(image)
         plt.show()
     
-    cropped_shoes = get_cropped_image(image, boxes, 'shoes', show)
-    cropped_upper_clothing = get_cropped_image(image, boxes, 'upper_clothing', show)
-    cropped_pants = get_cropped_image(image, boxes, 'pants', show)
-    cropped_hat = get_cropped_image(image, boxes, 'hat', show)
-    cropped_belt = get_cropped_image(image, boxes, 'belt', show)
-    
-    # Define a list of caption tasks to run in parallel
-    caption_tasks = [
-        (cropped_shoes, 'The shoes colors are '),
-        (cropped_shoes, 'The shoes are '),
-        (cropped_upper_clothing, 'The upper clothing color is '),
-        (cropped_upper_clothing, 'The upper clothing is '),
-        (cropped_pants, 'The pants color is '),
-        (cropped_pants, 'The pants are '),
-        (cropped_hat, 'The hat color is '),
-        (cropped_hat, 'The hat is '),
-        (cropped_belt, 'The belt color is '),
-        (cropped_belt, 'The belt is '),
-        (image, 'The person is wearing '),
-        (image, 'The person is '),
-    ]
+    caption_tasks = []
+    for key in cropping_plan.keys():
+        cropped_image = get_cropped_image(image, boxes, key, show)
+        for prompt in cropping_plan[key]['prompts']:
+            caption_tasks.append((cropped_image, prompt))
 
     captions = []
 
