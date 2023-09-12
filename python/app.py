@@ -53,14 +53,47 @@ def upload():
 
   pred_seg = get_segmentation_array(image)
   boxes = get_clothing_boxes(pred_seg)
+
+  return jsonify({
+     'imageSegmentationLabels': pred_seg.tolist(),
+     'boxes': boxes
+  })
+
+
+@app.route('/captions', methods=['POST'])
+def captions():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  # file.save('im-received.jpg')
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
   captions = get_captions_in_parallel(boxes, image)
 
   return jsonify({
-     'msg': 'Image uploaded successfully',
-     'imageSegmentationLabels': pred_seg.tolist(),
      'boxes': boxes,
      'captions': captions
   })
+
+
+@app.route('/segmentation', methods=['POST'])
+def segmentation():
+  if 'image' not in request.files:
+    return 'No file uploaded', 400
+  file = request.files['image']
+  # file.save('im-received.jpg')
+  image = Image.open(file.stream)
+
+  pred_seg = get_segmentation_array(image)
+  boxes = get_clothing_boxes(pred_seg)
+
+  return jsonify({
+     'boxes': boxes,
+     'imageSegmentationLabels': pred_seg.tolist()
+  })
+
 
 # Create segmentation array
 # Image object should be of type PIL.Image
