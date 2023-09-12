@@ -64,3 +64,9 @@ Geneva.Synthetics.Client.*
 .deploy/Microsoft.Marketplace.SaaS/GenevaSyntheticsConfig/*
 .deploy/Microsoft.Marketplace.SaaS/scripts/DSCM/GenevaActionsCmdlets
 /python/venv
+/image-segmenation-notebook/Include
+/image-segmenation-notebook/Lib
+/image-segmenation-notebook/Scripts
+/image-segmenation-notebook/pyvenv.cfg
+/image-segmenation-notebook/share
+
