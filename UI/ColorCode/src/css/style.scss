@@ -1,0 +1,147 @@
+html, body {
+  font-family: 'Rubik', sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 1rem;
+}
+
+button {
+  font-family: inherit;
+}
+
+canvas {
+  display: block;
+}
+
+.btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  
+  &.btn-image {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+}
+
+.layer {
+  top: 0;
+  left: 0;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  
+  &.top-center {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+}
+
+.hide {
+  display: none !important; 
+}
+
+#layer-start {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#segmentation,
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.data-label {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0,0,0,0.8);
+  color: white;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  border-radius: 0.4rem 0.4rem 0 0.4rem;
+  text-transform: capitalize;
+  width: fit-content;
+  transform: translate(-50%, -50%);
+}
+
+#layer-capture {
+  padding: 3rem;
+
+  .img-capture {
+    width: 12rem;
+  }
+}
+
+
+#layer-data {
+  padding: 3rem; 
+  overflow: hidden;
+
+  #match-response {
+    display: flex;
+    gap: 3rem;
+
+    &.perfect-match {
+      .swap-outfit {
+        display: none;
+      }
+    }
+
+    &.swap-outfit {
+      .perfect-match {
+        display: none;
+      }
+    }
+  
+    #toggle-match-response {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      font-size: 2rem;
+      justify-content: center;
+      align-items: center;
+  
+      img {
+        width: 12rem;
+      }
+    }
+
+    .match-content {
+      padding: 2rem;
+      box-sizing: border-box;
+      border: 5px solid black;
+      border-radius: 2rem;
+      max-width: 60%;
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      background-color: rgba(255,255,255,0.8);
+
+      img {
+        width: 5rem;
+      }
+
+      .title {
+        font-weight: 500;
+        font-size: 2rem;
+        padding: 0 0 .5rem 0;
+      }
+
+      .content {
+        font-size: 1.5rem;
+      }
+    }
+  }
+}

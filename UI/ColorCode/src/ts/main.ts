@@ -1,9 +1,12 @@
+import JSConfetti from "js-confetti";
 import {onStartButtonClick, hideStartLayer} from "./layer-start";
 import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCaptureButton, toggleRestartButton} from "./layer-capture";
 import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
 import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
-import {createLabel, clearAllLabels} from "./layer-data";
+import {createLabel, hideDataLayer, setMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
+
+const jsConfetti = new JSConfetti()
 
 const fullScreen = async () => {
     const query = new URLSearchParams(location.search);
@@ -19,28 +22,40 @@ const onCapture = async () => {
         toggleCaptureButton();
     
         const blob = await captureVideoFrame();
-        if(!blob) {
-            throw new Error("Failed to capture video frame");
-        }
     
         const [segmentation, analyze] = await Promise.all([
-            segmentationRequest(blob).then(res => res.json()),
-            imageAnalyzeRequest(blob).then(res => res.json()),
+            segmentationRequest(blob!).then(res => res.json()),
+            imageAnalyzeRequest(blob!).then(res => res.json()),
         ]);
     
         drawSegmentation(segmentation.imageSegmentationLabels);
+
+        if(!analyze.success) {
+            throw new Error("Failed to analyze image pls try again in 30s");
+        }
     
-        const results = JSON.parse(analyze.garmentColorResult);
+        const garmentColorResult = JSON.parse(analyze.garmentColorResult);
+        const matchingColorResult = JSON.parse(analyze.matchingColorResult);
         const positions = segmentation.boxes;
+
+        const isMatching = matchingColorResult.matching === "matching";
+
+        isMatching && jsConfetti.addConfetti();
     
+        setMatchResponse(
+            isMatching,
+            matchingColorResult.result
+        );
+
         for(const pos of positions) {
-            const value = results[pos.label];
+            const value = garmentColorResult[pos.label];
     
             if(value && value !== "unknown") {
                 createLabel(pos.label, value, pos.x, pos.y);
             }
         }
-    
+
+        showDataLayer();
         toggleRestartButton();
     } catch(e) {
         alert(e);
@@ -49,7 +64,7 @@ const onCapture = async () => {
 
 const onRestart = () => {
     toggleRestartButton();
-    clearAllLabels();
+    hideDataLayer();
     clearSegmentationLayer();
     playVideo();
     toggleCaptureButton();

@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ColorCode</title>
-    <link rel="stylesheet" href="/src/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/css/style.scss" />
   </head>
   <body>
     <div id="layer-video" class="layer">
@@ -13,10 +16,32 @@
     <div id="layer-segmentation" class="layer">
       <canvas id="segmentation"></canvas>
     </div>
-    <div id="layer-data" class="layer"></div>
-    <div id="layer-capture" class="layer hide">
-      <button id="btn-capture" class="btn middle-center">Capture</button>
-      <button id="btn-restart" class="btn middle-center hide">Restart</button>
+    <div id="layer-capture" class="layer top-center hide">
+      <button id="btn-capture" class="btn btn-image">
+        <img src="./public/pic.png" class="img-capture" alt="Capture" />
+      </button>
+      <!-- <button id="btn-restart" class="btn middle-center hide">Restart</button> -->
+    </div>
+    <div id="layer-data" class="layer hide">
+      <div id="match-response">
+        <button id="toggle-match-response" class="btn btn-image">
+          <img src="./public/how.png" alt="How do I look?" />
+          How do I look?
+        </button>
+        <div id="match-toggle-area" class="match-content hide">
+          <img src="./public/perfect-match.png" class="perfect-match" alt="Perfect match">
+          <img src="./public/swap-outfit.png" class="swap-outfit" alt="Swap outfit">
+          <div id="match-response-text">
+              <div class="title perfect-match">
+                Perfect match
+              </div>
+              <div class="title swap-outfit">
+                Swap outfit
+              </div>
+              <div class="content"></div>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="layer-start" class="layer">
       <button id="btn-start" class="btn middle-center">Start</button>
