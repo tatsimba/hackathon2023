@@ -55,7 +55,11 @@ const drawSegmentation = (width: number, height: number, segmentation: number[][
         const w = bottom[3] === OVERLAY_ALPHA && segment !== 0;
 
         if(x || y || z || w) {
-            const color: [number, number, number, number] = [...colorMap[segment], 255];
+            // random rgba color
+            const rgb = [...Array(3)].map(() => Math.floor(Math.random() * 45) + 210) as [number, number, number];
+
+            // const color: [number, number, number, number] = [...colorMap[segment], 255];
+            const color: [number, number, number, number] = [...rgb, 255];
 
             matrix.setPixel(i, color);
             matrix.setPixel(leftIndex, color);
@@ -71,13 +75,26 @@ const drawSegmentation = (width: number, height: number, segmentation: number[][
     const segImg = offscreenContext?.createImageData(width, height);
     segImg?.data.set(matrix.getMatrix());
     segImg && offscreenContext?.putImageData(segImg, 0, 0);
-
     return offscreen;
 };
 
-self.addEventListener("message", (e) => {
-    const {width, height, segmentation} = e.data;
-    const offscreen = drawSegmentation(width, height, segmentation);
+let animationFrameID: number;
 
-    self.postMessage(offscreen.transferToImageBitmap());
+self.addEventListener("message", (e) => {
+    const {width, height, segmentation, clear = false} = e.data;
+
+    if(clear) {
+        cancelAnimationFrame(animationFrameID);
+        self.postMessage({clear: true});
+        return;
+    }
+    
+    const draw = () => {
+        const offscreen = drawSegmentation(width, height, segmentation);
+        self.postMessage(offscreen.transferToImageBitmap());   
+
+        animationFrameID = requestAnimationFrame(draw);
+    }
+
+    animationFrameID = requestAnimationFrame(draw);
 });
