@@ -66,8 +66,6 @@ public class ImageAnalysisService : IImageAnalysisService
     private static string CreatePrompt(string denseCaptions)
     {
         return @$"
-Jacket or coat or scarf fits cold weather.
-However, Shorts and others fits hot weather.
 Given the captions: ""{denseCaptions}"".
 Focus on what the person in the captions is wearing and their colors out of the following garments list: ""{Garments}"".
 Provide a json response according to the following format:
@@ -76,9 +74,9 @@ Provide a json response according to the following format:
     resultWearing: ""Describe what the person is wearing and make sure to include the colors of the garments"",
     matchingWearing: ""Boolean value indicating whether or not the color combination of the garments is commonly wore by most people"",
     nonMatchingGarmentsWearing: ""List of garments that don't match if matchingWearing is false"",
-    resultWeather: ""Assess whether the person is dressed for a hot weather"",
-    matchingWeather: ""Boolean value indicating whether the garments fit a hot weather."",
-    nonMatchingGarmentsWeather: ""List of garments that don't match a very hot weather""
+    resultWeather: ""Describe whether the person is dressed for a hot weather?"",
+    matchingWeather: ""True whether the person is dressed for a hot weather, else false"",
+    nonMatchingGarmentsWeather: ""List of garments that the person is dressed which doesn't fit a hot weather""
 }}
 Give me only the json without any additional output.
 ";
