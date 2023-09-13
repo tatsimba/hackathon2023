@@ -14,7 +14,8 @@ public class ImageAnalysisService : IImageAnalysisService
     private readonly IVisionService _visionService;
     private readonly IVisionPythonService _visionPythonService;
     private readonly IGptService _gptService;
-    private static readonly string Garments = "pants, shirt, shoes, dress, hat, coat, jacket, scarf, shorts and belt";
+    private const string Garments = "pants, shorts, shirt, shoes, dress, coat, jacket and scarf";
+
     public ImageAnalysisService(IVisionService visionService, IGptService gptService, IVisionPythonService visionPythonService)
     {
         _visionService = visionService;
@@ -24,67 +25,68 @@ public class ImageAnalysisService : IImageAnalysisService
 
     public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image)
     {
+        // 1) get the dense captions
+        var denseCaptionsAll = await GetDenseCaptions(image);
+
+        //2) analyze with GPT
+        var prompt = CreatePrompt(string.Join(", ", denseCaptionsAll));
+        var matchingColorResult = await _gptService.RunPromptAsync(prompt);
+        return new ImageAnalysisResult {Prompt = prompt, Success = matchingColorResult.Item2, Result = matchingColorResult.Item1, DenseCaptions = denseCaptionsAll };
+    }
+
+    private async Task<List<string>> GetDenseCaptions(IFormFile image)
+    {
         var imageTempFile = Path.GetTempFileName();
         Console.WriteLine("Using " + imageTempFile);
         await image.OpenReadStream().CopyToAsync(new FileStream(imageTempFile, FileMode.Open));
 
-        // 1) get the dense captions
         var denseCaptionsTask = _visionService.AnalyzeDenseCaptions(imageTempFile);
-        var densePythonCaptionsUpperClothingTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "upper_clothing");
+        var densePythonCaptionsUpperClothingTask =
+            _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "upper_clothing");
         var densePythonCaptionsUpperShoesTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "shoes");
-        var densePythonCaptionsUpperPantsTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile,"pants");
-        Task.WaitAll(denseCaptionsTask, densePythonCaptionsUpperClothingTask, densePythonCaptionsUpperShoesTask, densePythonCaptionsUpperPantsTask);
+        var densePythonCaptionsUpperPantsTask = _visionPythonService.AnalyzeDenseCaptions(image, imageTempFile, "pants");
+        Task.WaitAll(denseCaptionsTask, densePythonCaptionsUpperClothingTask, densePythonCaptionsUpperShoesTask,
+            densePythonCaptionsUpperPantsTask);
         var denseCaptionsAll = denseCaptionsTask.Result
             .Concat(densePythonCaptionsUpperClothingTask.Result)
             .Concat(densePythonCaptionsUpperShoesTask.Result)
             .Concat(densePythonCaptionsUpperPantsTask.Result)
             .Distinct().ToList();
-        var denseCaptionStr= string.Join(", ", denseCaptionsAll);
-
-        //2) analyze with GPT
-        var garmentColorTask = _gptService.RunPromptAsync(CreateGarmentColorPrompt(denseCaptionStr));
-        var weatherTask = _gptService.RunPromptAsync(CreateWeatherPrompt(denseCaptionStr));
-        var matchingColorTask = _gptService.RunPromptAsync(CreateMatchingColorPrompt(denseCaptionStr));
-        Task.WaitAll(garmentColorTask, weatherTask, matchingColorTask);
-        bool success = garmentColorTask.Result.Item2 && weatherTask.Result.Item2 && matchingColorTask.Result.Item2;
-        return new ImageAnalysisResult {Success = success, GarmentColorResult = garmentColorTask.Result.Item1, MatchingColorResult = matchingColorTask.Result.Item1, WeatherResult = weatherTask.Result.Item1, DenseCaptions = denseCaptionsAll };
+        return denseCaptionsAll;
     }
 
-    public string CreateGarmentColorPrompt(string denseCaptions)
-    {
-        //coat, 
-        var builder = new StringBuilder();
-        builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
-        builder.AppendLine("Note what the person in the image description is wearing.");
-        builder.AppendLine($"Summarize what the person is wearing out of the following items: {Garments}"); 
-        builder.AppendLine("Format the output as json using the following scheme: { \"garment name \": \"garment color\"}.");
-        builder.AppendLine("In case the garment is not mentioned, don't add it to the response.");
-        return builder.ToString();
-    }
-
-    public string CreateWeatherPrompt(string denseCaptions)
+    private static string CreatePrompt(string denseCaptions)
     {
         var builder = new StringBuilder();
         builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
-        builder.AppendLine("Note what the person in the image description is wearing.");
-        builder.AppendLine("Does the clothes which the person is wearing matches a sunny day?");
-        builder.AppendLine("Write the response in json format of tree fields:");
-        builder.AppendLine("First field name is 'result' and explains in 1 short and concise sentence");
-        builder.AppendLine("Second field name is 'matching' and contains a single word: 'matching' or 'non-matching'");
-        builder.AppendLine($"Third filed name is 'non-matching-garments' and contains the garments that are not matching out of the following garments: {Garments}");
+        builder.AppendLine($"Note what the person in the captions is wearing out of the following garments list: \"{Garments}\".");
+        builder.AppendLine("We would like to assess the following:");
+        CreateMatchingColorPrompt(builder);
+        CreateWeatherPrompt(builder);
+        CreateGarmentColorPrompt(builder);
+        builder.AppendLine("Provide the response in a json format using the following properties: resultGarmentsColors, resultWearing, matchingWearing, nonMatchingGarmentsWearing, resultWeather, matchingWeather, nonMatchingGarmentsWeather");
         return builder.ToString();
     }
-
-    public string CreateMatchingColorPrompt(string denseCaptions)
+    private static void CreateMatchingColorPrompt(StringBuilder builder)
     {
-        var builder = new StringBuilder();
-        builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
-        builder.AppendLine("Note what the person in the image description is wearing.");
-        builder.AppendLine("Does the clothes which the person is wearing fits well in terms of color?");
-        builder.AppendLine("Write the response in json format of tree fields:");
-        builder.AppendLine("First field name is 'result' and explains in 1 short and concise sentence");
-        builder.AppendLine("Second field name is 'matching' and contains a single word: 'matching' or 'non-matching'");
-        builder.AppendLine($"Third filed name is 'non-matching-garments' and contains the garments that are not matching out of the following garments: {Garments}");
-        return builder.ToString();
+        builder.AppendLine($"Assessment 1 - Does the clothes which the person is wearing fit well in terms of color?");
+        builder.AppendLine("\"resultWearing\": Should explain in 1 short and concise sentence result of assessment 1.");
+        builder.AppendLine("\"matchingWearing\": Should contain either \"true\" or \"false\" bool value according to assessment 1.");
+        builder.AppendLine($"\"nonMatchingGarmentsWearing\": Should contain the garments that are not matching in assessment 1.");
+    }
+
+    private static void CreateWeatherPrompt(StringBuilder builder)
+    {
+        builder.AppendLine("Assessment 2 - Does the clothes which the person is wearing matches a sunny day?");
+        builder.AppendLine("\"resultWeather\": Should explain in 1 short and concise sentence result of assessment 2.");
+        builder.AppendLine("\"matchingWeather\": Should contain either \"true\" or \"false\" bool value according to assessment 2.");
+        builder.AppendLine($"\"nonMatchingGarmentsWeather\": should contain the garments that are not matching in assessment 2.");
+    }
+
+    private static void CreateGarmentColorPrompt(StringBuilder builder)
+    {
+        builder.AppendLine($"Assessment 3 - Summarize what are the color of the garments that the person is wearing?");
+        builder.AppendLine("\"resultGarmentsColors\": Result of assessment 3 in the schema of { \"garment name \": \"garment color\"}.");
+        builder.AppendLine("Not mentioned or undefined or unknown garments should not be included in the response");
     }
 }

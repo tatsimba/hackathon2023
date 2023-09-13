@@ -30,7 +30,7 @@ public class GptService : IGptService
         {
             Messages = { new Message { Content = prompt } },
             MaxTokens = 1000,
-            Temperature = 0.3,
+            Temperature = 1,
             TopP = 1,
             N = 1
         });
