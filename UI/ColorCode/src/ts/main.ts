@@ -4,7 +4,7 @@ import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCapt
 import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
 import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
 import {toggleLoadingLayer} from "./layer-loading";
-import {createLabel, hideDataLayer, setColorMatchResponse, setMatchResponse, setWeatherMatchResponse, showDataLayer} from "./layer-data";
+import {createLabel, hideDataLayer, setColorMatchResponse, setWeatherMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
 const jsConfetti = new JSConfetti()
