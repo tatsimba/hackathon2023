@@ -150,11 +150,19 @@ canvas {
     gap: 3rem;
   }
 
+  .flex-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    align-items: flex-start;
+  }
+
   #btn-restart img {
     width: 8rem;
   }
 
-  #match-response {
+  #match-weather-response,
+  #match-color-response {
     display: flex;
     align-items: flex-start;
     gap: 3rem;
@@ -178,7 +186,7 @@ canvas {
       font-size: 2rem;
       justify-content: center;
       align-items: center;
-      text-wrap: nowrap;
+      width: 17rem;
   
       img {
         width: 12rem;

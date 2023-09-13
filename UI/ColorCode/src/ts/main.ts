@@ -4,7 +4,7 @@ import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCapt
 import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
 import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
 import {toggleLoadingLayer} from "./layer-loading";
-import {createLabel, hideDataLayer, setMatchResponse, showDataLayer} from "./layer-data";
+import {createLabel, hideDataLayer, setColorMatchResponse, setMatchResponse, setWeatherMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
 const jsConfetti = new JSConfetti()
@@ -37,19 +37,24 @@ const onCapture = async () => {
     
         const {
             matchingWearing,
-            // matchingWeather,
+            matchingWeather,
             nonMatchingGarmentsWearing,
-            // nonMatchingGarmentsWeather,
+            nonMatchingGarmentsWeather,
             resultGarmentsColors,
             resultWearing,
-            // resultWeather
+            resultWeather
          } = JSON.parse(analyze.result);
 
         const positions = segmentation.boxes;
 
-        setMatchResponse(
+        setColorMatchResponse(
             matchingWearing,
             resultWearing
+        );
+
+        setWeatherMatchResponse(
+            matchingWeather,
+            resultWeather
         );
 
         const map: {[key: string]: string} = {
@@ -71,7 +76,7 @@ const onCapture = async () => {
             }
         }
 
-        const labels = nonMatchingGarmentsWearing?.map((label: string) => {
+        const labels = [...nonMatchingGarmentsWeather, ...nonMatchingGarmentsWearing]?.map((label: string) => {
             const pos = positions[label] || positions[map[label]];
             return pos?.numerical_labels_values || [];
         }).flat();
