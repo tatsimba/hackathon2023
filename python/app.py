@@ -198,7 +198,7 @@ def get_bbox_for_label(seg_matrix_numpy, labels, label_name):
         'y': y_min,
         'w': width,
         'h': height,
-        'labels': labels
+        'numerical_labels_values': labels
     }
 
 def get_clothing_boxes(seg_matrix_numpy):
