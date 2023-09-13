@@ -4,7 +4,7 @@ import {onCaptureButtonClick, showCaptureLayer, onRestartButtonClick, toggleCapt
 import {startVideo, pauseVideo, captureVideoFrame, playVideo} from "./layer-video";
 import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
 import {toggleLoadingLayer} from "./layer-loading";
-import {createLabel, hideDataLayer, setMatchResponse, showDataLayer} from "./layer-data";
+import {createLabel, hideDataLayer, setColorMatchResponse, setWeatherMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
 
 const jsConfetti = new JSConfetti()
@@ -45,40 +45,47 @@ const onCapture = async () => {
             resultWeather
          } = JSON.parse(analyze.result);
 
-
-        // const matchingColorResult = JSON.parse(analyze.matchingColorResult);
         const positions = segmentation.boxes;
 
-        // TODO: using labels from API response
-        // TODO: segmentation labels numbers should be mapped to other API's labels response
-        await drawSegmentation([11], segmentation.imageSegmentationLabels);
-        toggleLoadingLayer();
-
-        matchingWearing && jsConfetti.addConfetti();
-    
-        setMatchResponse(
+        setColorMatchResponse(
             matchingWearing,
             resultWearing
+        );
+
+        setWeatherMatchResponse(
+            matchingWeather,
+            resultWeather
         );
 
         const map: {[key: string]: string} = {
             pants: "pants",
             shorts: "pants",
-            shirt: "upper_clothing",
+            shirt: "upper clothing",
             shoes: "shoes",
-            dress: "upper_clothing",
-            coat: "upper_clothing",
-            jacket: "upper_clothing",
+            dress: "upper clothing",
+            coat: "upper clothing",
+            jacket: "upper clothing",
             scarf: "scarf"
         }
 
         for(const [key, val] of Object.entries(resultGarmentsColors)) {
-            for(const pos of positions) {
-                if(map[key] === pos.label) {
-                    createLabel(key, String(val), pos.x, pos.y);
-                }
+            const pos = positions[key] || positions[map[key]];
+
+            if(pos) {
+                createLabel(key, String(val), pos.x, pos.y);
             }
         }
+
+        const labels = [...nonMatchingGarmentsWeather, ...nonMatchingGarmentsWearing]?.map((label: string) => {
+            const pos = positions[label] || positions[map[label]];
+            return pos?.numerical_labels_values || [];
+        }).flat();
+
+        await drawSegmentation(labels, segmentation.imageSegmentationLabels);
+        toggleLoadingLayer();
+
+        matchingWearing && jsConfetti.addConfetti();
+
 
         showDataLayer();
         toggleRestartButton();

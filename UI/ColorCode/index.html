@@ -27,18 +27,33 @@
     </div>
     <div id="layer-data" class="layer hide">
       <div class="top-row">
-        <div id="match-response">
-          <button id="toggle-match-response" class="btn btn-image">
-            <img src="./public/perfect-match.png" class="perfect-match rotate-animation" alt="Perfect match">
-            <img src="./public/swap-outfit.png" class="swap-outfit rotate-animation" alt="Swap outfit">
-            <div class="perfect-match">
-              Perfect match
-            </div>
-            <div class="swap-outfit">
-              Swap outfit
-            </div>
-          </button>
-          <div id="match-toggle-area" class="match-content hide"></div>
+        <div class="flex-col">
+          <div id="match-color-response">
+            <button id="toggle-match-response" class="btn btn-image">
+              <img src="./public/perfect-match.png" class="perfect-match rotate-animation" alt="Perfect match">
+              <img src="./public/swap-outfit.png" class="swap-outfit rotate-animation" alt="Swap outfit">
+              <div class="perfect-match">
+                Perfect match
+              </div>
+              <div class="swap-outfit">
+                Swap outfit
+              </div>
+            </button>
+            <div id="match-toggle-area" class="match-content hide"></div>
+          </div>
+          <div id="match-weather-response">
+            <button id="toggle-match-response" class="btn btn-image">
+              <img src="./public/weather-proofed.png" class="perfect-match" alt="Perfect match">
+              <img src="./public/not-weather.png" class="swap-outfit" alt="Swap outfit">
+              <div class="perfect-match">
+                Weather proofed
+              </div>
+              <div class="swap-outfit">
+                Not match to weather
+              </div>
+            </button>
+            <div id="match-toggle-area" class="match-content hide"></div>
+          </div>
         </div>
         <button id="btn-restart" class="btn btn-image middle-center hide">
           <img src="./public/X.svg" class="img-restart" alt="Restart" />

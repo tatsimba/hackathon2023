@@ -1,12 +1,15 @@
 import {canvas} from "./layer-segmentation";
 const layer = document.getElementById("layer-data");
+const matchColorResponse = document.getElementById("match-color-response");
+const matchWeatherResponse = document.getElementById("match-weather-response");
 
-const matchResponse = document.getElementById("match-response");
-const toggleMatchResponseBtn = matchResponse?.querySelector("#toggle-match-response");
-const matchToggleArea = matchResponse?.querySelector("#match-toggle-area");
+[matchColorResponse, matchWeatherResponse].forEach(el => {
+    const toggleMatchResponseBtn = el?.querySelector("#toggle-match-response");
+    const matchToggleArea = el?.querySelector("#match-toggle-area");
 
-toggleMatchResponseBtn?.addEventListener("click", () => {
-    matchToggleArea?.classList.toggle("hide");
+    toggleMatchResponseBtn?.addEventListener("click", () => {
+        matchToggleArea?.classList.toggle("hide");
+    });
 });
 
 const posLabel = (x: number, y: number) => {
@@ -45,15 +48,26 @@ export const hideDataLayer = () => {
     clearAllLabels();
 }
 
-export const setMatchResponse = (isMatch: boolean, response: string) => {
+const setMatchResponse = (el: HTMLElement, isMatch: boolean, response: string) => {
     if(isMatch) {
-        matchResponse?.classList.remove("swap-outfit");
-        matchResponse?.classList.add("perfect-match");
+        el?.classList.remove("swap-outfit");
+        el?.classList.add("perfect-match");
     } else {
-        matchResponse?.classList.remove("perfect-match");
-        matchResponse?.classList.add("swap-outfit");
+        el?.classList.remove("perfect-match");
+        el?.classList.add("swap-outfit");
     }
+
+    const matchToggleArea = el?.querySelector("#match-toggle-area");
 
     matchToggleArea!.textContent = response;
 }
+
+export const setColorMatchResponse = (isMatch: boolean, response: string) => {
+    setMatchResponse(matchColorResponse!, isMatch, response);
+}
+
+export const setWeatherMatchResponse = (isMatch: boolean, response: string) => {
+    setMatchResponse(matchWeatherResponse!, isMatch, response);
+}
+
 
