@@ -6,7 +6,7 @@ using Model.VisionPython;
 
 public interface IVisionPythonService
 {
-    Task<List<string>> AnalyzeDenseCaptions(IFormFile image, string imagePath, string bodyPart);
+    Task<(List<string>, bool)> AnalyzeDenseCaptions(IFormFile image, string imagePath, string bodyPart);
 }
 
 public class VisionPythonService : IVisionPythonService
@@ -14,7 +14,7 @@ public class VisionPythonService : IVisionPythonService
     //private const string DenseCaptionPath = "https://colorecode-python.azurewebsites.net/captions";
     private const string DenseCaptionPath = "https://colorecode-python.azurewebsites.net/captions/{0}";
 
-    public async Task<List<string>> AnalyzeDenseCaptions(IFormFile image, string imagePath, string bodyPart)
+    public async Task<(List<string>, bool)> AnalyzeDenseCaptions(IFormFile image, string imagePath, string bodyPart)
     {
         var imageTempFile = Path.GetTempFileName();
         File.Copy(imagePath, imageTempFile, true);
@@ -33,19 +33,20 @@ public class VisionPythonService : IVisionPythonService
         watch.Stop();
         Console.WriteLine($"Vision python took {watch.ElapsedMilliseconds} ms");
 
-        var responseContent = httpResponse?.Content is not null
+        var responseContent = httpResponse.Content is not null
         ? await httpResponse.Content.ReadAsStringAsync()
         : string.Empty;
 
         if (!httpResponse?.IsSuccessStatusCode ?? true)
         {
             Console.WriteLine($"Failed to query vision python - {responseContent}");
-            return new List<string>() { $"Failed to query vision python {responseContent}" };
+            return (new List<string>() { $"Failed to query vision python - {responseContent}" }, false);
+
         }
 
         var promptFilterResult = JsonSerializer.Deserialize<VisionPythonResponse>(responseContent);
 
-        if (promptFilterResult?.Captions == null) return new List<string>();
+        if (promptFilterResult?.Captions == null) return (new List<string>(), false);
 
         Console.WriteLine(" Python Dense Captions:");
         foreach (var caption in promptFilterResult.Captions)
@@ -53,6 +54,6 @@ public class VisionPythonService : IVisionPythonService
             Console.WriteLine($"{caption}");
         }
 
-        return promptFilterResult.Captions.Where(s => s.StartsWith("in 4 word") is false).ToList();
+        return (promptFilterResult.Captions.Where(s => s.StartsWith("in 4 word") is false).ToList(), true);
     }
 }
