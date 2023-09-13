@@ -1,3 +1,7 @@
+:root {
+  --countdown-value: 3; 
+}
+
 html, body {
   font-family: 'Rubik', sans-serif;
   margin: 0;
@@ -86,14 +90,51 @@ canvas {
   border-radius: 1rem 1rem 0 1rem;
   text-transform: capitalize;
   width: fit-content;
-  transform: translate(-50%, -50%);
+  transform: translate(-100%, -100%);
 }
 
 #layer-capture {
+  overflow: hidden;
   padding: 3rem;
 
   .img-capture {
     width: 12rem;
+  }
+
+  #btn-capture {
+    position: relative;
+
+  }
+
+  #error-message {
+    position: absolute;
+    top: 3rem;
+    font-weight: 600;
+    font-size: 3rem;
+    color: red;
+    text-shadow: 0 0 0.5rem white;
+  }
+
+  #timer {
+    display: flex;
+    justify-content: center;
+    font-size: 15rem;
+    font-weight: bold;
+    color: white;
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+
+    &:before {
+      counter-reset: variable var(--countdown-value);
+      content: counter(variable);
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+    }
   }
 }
 
@@ -176,5 +217,29 @@ canvas {
 @keyframes loader {
   90% {
     filter: saturate(10);
+  }
+}
+
+.countdown-animation {
+  animation-name: countdown;
+  animation-duration: 1s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes countdown {
+  0% {
+      transform: scale(0);
+      opacity: 1;
+  }
+
+  50% {
+      transform: scale(1);
+      opacity: 1;
+  }
+
+  100% {
+      transform: scale(3);
+      opacity: 0;
   }
 }
