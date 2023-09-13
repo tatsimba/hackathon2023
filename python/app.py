@@ -75,26 +75,6 @@ def segmentation():
      'imageSegmentationLabels': pred_seg.tolist()
   })
 
-@app.route('/captions', methods=['POST'])
-def captions():
-  if 'image' not in request.files:
-    return 'No file uploaded', 400
-  file = request.files['image']
-  image = Image.open(file.stream)
-
-  pred_seg = get_segmentation_array(image)
-  boxes = get_clothing_boxes(pred_seg)
-  captions = get_captions_in_parallel(boxes, image, {
-    'upper_clothing': {'prompts': ['Upper clothing colors', 'In 4 words max the upper clothing can be described']},
-    'pants': {'prompts': ['Pants main color', 'In 4 words max the pants can be described']},
-    'shoes': {'prompts': ['Shoes main color is']}
-  })
-
-  return jsonify({
-     'boxes': boxes,
-     'captions': captions
-  })
-
 @app.route('/captions/upper_clothing', methods=['POST'])
 def captions_upper_clothing():
   if 'image' not in request.files:
@@ -209,6 +189,11 @@ def get_bbox_for_label(seg_matrix_numpy, labels, label_name):
         'numerical_labels_values': labels
     }
 
+def add_to_dict_if_not_none(dict, key, value):
+    if(value is not None):
+        dict[key] = value
+
+
 def get_clothing_boxes(seg_matrix_numpy):
     shirt_label = 4
     pants_label = 6
@@ -223,16 +208,15 @@ def get_clothing_boxes(seg_matrix_numpy):
     upper_clothing_box = get_bbox_for_label(seg_matrix_numpy, [dress_label, shirt_label, scarf_label], 'upper clothing')
     scarf_box = get_bbox_for_label(seg_matrix_numpy, [scarf_label], 'scarf')
 
-    # if(dress_box is not None and shirt_box is not None):
-    #     dress_area = dress_box['w'] * dress_box['h']
-    #     shirt_area = shirt_box['w'] * shirt_box['h']
-    #     if(dress_area > shirt_area):
-    #         shirt_box = None        
-    #     else:
-    #         dress_box = None
+    dict_boxes = {}
+    add_to_dict_if_not_none(dict_boxes, 'pants', pants_box)
+    add_to_dict_if_not_none(dict_boxes, 'dress', dress_box)
+    add_to_dict_if_not_none(dict_boxes, 'shoes', shoes_box)
+    add_to_dict_if_not_none(dict_boxes, 'upper clothing', upper_clothing_box)
+    add_to_dict_if_not_none(dict_boxes, 'scarf', scarf_box)
 
-    return list(filter(lambda x: x is not None, 
-        [pants_box, dress_box, shoes_box, upper_clothing_box, scarf_box]))
+    return dict_boxes
+
 
 def first(iterable, condition = lambda x: True):
     items = list(filter(condition, iterable))
@@ -250,9 +234,9 @@ def get_caption(cropped_image, prompt, preprocessed_image=None):
     return text
 
 def get_cropped_image(image, boxes, label, show=False):
-    box = first(boxes, lambda x: x['label'] == label)
-    if(box is None):
+    if(label not in boxes):
         return None
+    box = boxes[label]
     cropped_image = image.crop((box['x'], box['y'], box['x'] + box['w'], box['y'] + box['h']))
     if(show):
         plt.imshow(cropped_image)
