@@ -13,7 +13,7 @@ export const timer = (start = 3) => {
         timerElement!.classList.add("countdown-animation");
         
         const interval = setInterval(() => {
-            if(count === 0) {
+            if(count === 1) {
                 clearInterval(interval);
                 timerElement!.classList.add("hide");
                 resolve(count);
