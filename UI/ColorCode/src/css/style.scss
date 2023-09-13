@@ -78,7 +78,7 @@ canvas {
 }
 
 .data-label {
-  position: relative;
+  position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,7 +90,7 @@ canvas {
   border-radius: 1rem 1rem 0 1rem;
   text-transform: capitalize;
   width: fit-content;
-  transform: translate(-100%, -100%);
+  transform: translate(-50%, -50%);
 }
 
 #layer-capture {
