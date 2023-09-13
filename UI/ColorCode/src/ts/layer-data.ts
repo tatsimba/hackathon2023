@@ -11,7 +11,6 @@ toggleMatchResponseBtn?.addEventListener("click", () => {
 
 const posLabel = (x: number, y: number) => {
     const {width, height} = canvas;
-    
     const rect = canvas.getBoundingClientRect();
     const xRatio = rect.width / width;
     const yRatio = rect.height / height;
@@ -27,8 +26,8 @@ export const createLabel = (key: string, label: string, x: number, y: number) =>
     const labelElement = document.createElement("div");
     labelElement.classList.add("data-label");
     labelElement.textContent = `${label} ${key}`;
-    labelElement.style.left = `${rX}px`;
-    labelElement.style.top = `${rY}px`;
+    labelElement.style.left = `min(${rX}px, 100vw)`;
+    labelElement.style.top = `min(${rY}px, 100vw)`;
     layer?.appendChild(labelElement);
 }
 
