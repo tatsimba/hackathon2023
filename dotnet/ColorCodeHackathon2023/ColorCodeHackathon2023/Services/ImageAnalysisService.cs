@@ -2,11 +2,36 @@
 
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Model;
 
 public interface IImageAnalysisService
 {
-    Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image);
+    Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image, bool useHardCodedWeatherResult = false);
+}
+
+public class GarmentInfo
+{
+    [JsonPropertyName("resultGarmentsColors")]
+    public Dictionary<string, string> ResultGarmentsColors { get; set; }
+
+    [JsonPropertyName("resultWearing")]
+    public string ResultWearing { get; set; }
+
+    [JsonPropertyName("matchingWearing")]
+    public bool MatchingWearing { get; set; }
+
+    [JsonPropertyName("nonMatchingGarmentsWearing")]
+    public List<string> NonMatchingGarmentsWearing { get; set; }
+
+    [JsonPropertyName("resultWeather")]
+    public string ResultWeather { get; set; }
+
+    [JsonPropertyName("matchingWeather")]
+    public bool MatchingWeather { get; set; }
+
+    [JsonPropertyName("nonMatchingGarmentsWeather")]
+    public List<string> NonMatchingGarmentsWeather { get; set; }
 }
 
 public class ImageAnalysisService : IImageAnalysisService
@@ -23,23 +48,49 @@ public class ImageAnalysisService : IImageAnalysisService
         _visionPythonService = visionPythonService;
     }
 
-    public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image)
+    public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image, bool useHardCodedWeatherResult)
     {
         // 1) get the dense captions
         var denseCaptionsAll = await GetDenseCaptions(image);
+
+        var winterItems = new List<string> { "jacket", "scarf", "coat" };
+        var denseCaptionsInOneSentence = string.Join(", ", denseCaptionsAll.Select(x => x.ToLower()));
+        var winterItemsInCaptions = winterItems.Where(x => denseCaptionsInOneSentence.Contains(x)).ToList();
+        var weatherMatchingSummary = "";
+        if (winterItemsInCaptions.Any())
+        {
+            if (winterItemsInCaptions.Count == 1)
+            {
+                weatherMatchingSummary = $"You aren't dressed well for a sunny weather, I would suggest removing the {winterItemsInCaptions.Last()}";
+            }
+            else
+            {
+                weatherMatchingSummary = $"You aren't dressed well for a sunny weather, I would suggest removing the {string.Join(", ", winterItemsInCaptions.SkipLast(1))} and the {winterItemsInCaptions.Last()}";
+            }
+        }
+        else
+        {
+            weatherMatchingSummary = "You are dressed well for a sunny weather";
+        }
 
         //2) analyze with GPT
         var prompt = CreatePrompt(string.Join(", ", denseCaptionsAll));
         var matchingColorResult = await _gptService.RunPromptAsync(prompt);
         Console.WriteLine("GPT result: " + matchingColorResult.Item1);
         var success = matchingColorResult.Item2;
-        var jsonForResult = "{}";
+        GarmentInfo? result = null;
         if (success)
         {
-            jsonForResult = JsonSerializer.Serialize(JsonSerializer.Deserialize<object>(matchingColorResult.Item1, new JsonSerializerOptions { AllowTrailingCommas = true }));
+            result = JsonSerializer.Deserialize<GarmentInfo>(matchingColorResult.Item1, new JsonSerializerOptions { AllowTrailingCommas = true });
+            if (useHardCodedWeatherResult)
+            {
+                result.MatchingWeather = !winterItemsInCaptions.Any();
+                result.ResultWeather = weatherMatchingSummary;
+                result.NonMatchingGarmentsWeather = winterItemsInCaptions;
+            }
         }
-        
-        return new ImageAnalysisResult {Prompt = prompt, Success = success, Result = jsonForResult, DenseCaptions = denseCaptionsAll };
+
+        return new ImageAnalysisResult { Prompt = prompt, Success = success, Result = JsonSerializer.Serialize(result), DenseCaptions = denseCaptionsAll };
     }
 
     private async Task<List<string>> GetDenseCaptions(IFormFile image)
