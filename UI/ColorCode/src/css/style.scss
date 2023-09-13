@@ -2,13 +2,17 @@
   --countdown-value: 3; 
 }
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body {
   font-family: 'Rubik', sans-serif;
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  font-size: max(calc(1vh + .1rem), 0.7rem);
+  font-size: max(calc(.7vh + .1rem), 0.7rem);
 }
 
 button {
@@ -200,6 +204,7 @@ canvas {
       border-radius: 2rem;
       background-color: rgba(255,255,255,0.8);
       font-size: 1.5rem;
+      max-width: 55vw;
     }
   }
 }

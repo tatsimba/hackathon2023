@@ -95,7 +95,7 @@ const onCapture = async () => {
         toggleLoadingLayer();
         toggleCaptureButton();
         toggleErrorMessage();
-        await timer(30).then(() => toggleErrorMessage());
+        await timer(10).then(() => toggleErrorMessage());
         toggleCaptureButton(); 
     }
 }
