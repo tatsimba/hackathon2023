@@ -45,17 +45,8 @@ const onCapture = async () => {
             resultWeather
          } = JSON.parse(analyze.result);
 
-
-        // const matchingColorResult = JSON.parse(analyze.matchingColorResult);
         const positions = segmentation.boxes;
 
-        // TODO: using labels from API response
-        // TODO: segmentation labels numbers should be mapped to other API's labels response
-        await drawSegmentation([11], segmentation.imageSegmentationLabels);
-        toggleLoadingLayer();
-
-        matchingWearing && jsConfetti.addConfetti();
-    
         setMatchResponse(
             matchingWearing,
             resultWearing
@@ -64,21 +55,32 @@ const onCapture = async () => {
         const map: {[key: string]: string} = {
             pants: "pants",
             shorts: "pants",
-            shirt: "upper_clothing",
+            shirt: "upper clothing",
             shoes: "shoes",
-            dress: "upper_clothing",
-            coat: "upper_clothing",
-            jacket: "upper_clothing",
+            dress: "upper clothing",
+            coat: "upper clothing",
+            jacket: "upper clothing",
             scarf: "scarf"
         }
 
         for(const [key, val] of Object.entries(resultGarmentsColors)) {
-            for(const pos of positions) {
-                if(map[key] === pos.label) {
-                    createLabel(key, String(val), pos.x, pos.y);
-                }
+            const pos = positions[key] || positions[map[key]];
+
+            if(pos) {
+                createLabel(key, String(val), pos.x, pos.y);
             }
         }
+
+        const labels = nonMatchingGarmentsWearing?.map((label: string) => {
+            const pos = positions[label] || positions[map[label]];
+            return pos?.numerical_labels_values || [];
+        }).flat();
+
+        await drawSegmentation(labels, segmentation.imageSegmentationLabels);
+        toggleLoadingLayer();
+
+        matchingWearing && jsConfetti.addConfetti();
+
 
         showDataLayer();
         toggleRestartButton();
