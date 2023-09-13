@@ -37,12 +37,12 @@ const onCapture = async () => {
     
         const {
             matchingWearing,
-            matchingWeather,
+            // matchingWeather,
             nonMatchingGarmentsWearing,
-            nonMatchingGarmentsWeather,
+            // nonMatchingGarmentsWeather,
             resultGarmentsColors,
             resultWearing,
-            resultWeather
+            // resultWeather
          } = JSON.parse(analyze.result);
 
         const positions = segmentation.boxes;
