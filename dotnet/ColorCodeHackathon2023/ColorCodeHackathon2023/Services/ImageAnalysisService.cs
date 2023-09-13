@@ -1,12 +1,37 @@
 ﻿namespace ColorCodeHackathon2023.Services;
 
 using System.Linq;
-using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Model;
 
 public interface IImageAnalysisService
 {
-    Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image);
+    Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image, bool useHardCodedWeatherResult = false);
+}
+
+public class GarmentInfo
+{
+    [JsonPropertyName("resultGarmentsColors")]
+    public Dictionary<string, string> ResultGarmentsColors { get; set; }
+
+    [JsonPropertyName("resultWearing")]
+    public string ResultWearing { get; set; }
+
+    [JsonPropertyName("matchingWearing")]
+    public bool MatchingWearing { get; set; }
+
+    [JsonPropertyName("nonMatchingGarmentsWearing")]
+    public List<string> NonMatchingGarmentsWearing { get; set; }
+
+    [JsonPropertyName("resultWeather")]
+    public string ResultWeather { get; set; }
+
+    [JsonPropertyName("matchingWeather")]
+    public bool MatchingWeather { get; set; }
+
+    [JsonPropertyName("nonMatchingGarmentsWeather")]
+    public List<string> NonMatchingGarmentsWeather { get; set; }
 }
 
 public class ImageAnalysisService : IImageAnalysisService
@@ -23,15 +48,49 @@ public class ImageAnalysisService : IImageAnalysisService
         _visionPythonService = visionPythonService;
     }
 
-    public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image)
+    public async Task<ImageAnalysisResult> AnalyzeImageAsync(IFormFile image, bool useHardCodedWeatherResult)
     {
         // 1) get the dense captions
         var denseCaptionsAll = await GetDenseCaptions(image);
 
+        var winterItems = new List<string> { "jacket", "scarf", "coat" };
+        var denseCaptionsInOneSentence = string.Join(", ", denseCaptionsAll.Select(x => x.ToLower()));
+        var winterItemsInCaptions = winterItems.Where(x => denseCaptionsInOneSentence.Contains(x)).ToList();
+        var weatherMatchingSummary = "";
+        if (winterItemsInCaptions.Any())
+        {
+            if (winterItemsInCaptions.Count == 1)
+            {
+                weatherMatchingSummary = $"You aren't dressed well for a sunny weather, I would suggest removing the {winterItemsInCaptions.Last()}";
+            }
+            else
+            {
+                weatherMatchingSummary = $"You aren't dressed well for a sunny weather, I would suggest removing the {string.Join(", ", winterItemsInCaptions.SkipLast(1))} and the {winterItemsInCaptions.Last()}";
+            }
+        }
+        else
+        {
+            weatherMatchingSummary = "You are dressed well for a sunny weather";
+        }
+
         //2) analyze with GPT
         var prompt = CreatePrompt(string.Join(", ", denseCaptionsAll));
         var matchingColorResult = await _gptService.RunPromptAsync(prompt);
-        return new ImageAnalysisResult {Prompt = prompt, Success = matchingColorResult.Item2, Result = matchingColorResult.Item1, DenseCaptions = denseCaptionsAll };
+        Console.WriteLine("GPT result: " + matchingColorResult.Item1);
+        var success = matchingColorResult.Item2;
+        GarmentInfo? result = null;
+        if (success)
+        {
+            result = JsonSerializer.Deserialize<GarmentInfo>(matchingColorResult.Item1, new JsonSerializerOptions { AllowTrailingCommas = true });
+            if (useHardCodedWeatherResult)
+            {
+                result.MatchingWeather = !winterItemsInCaptions.Any();
+                result.ResultWeather = weatherMatchingSummary;
+                result.NonMatchingGarmentsWeather = winterItemsInCaptions;
+            }
+        }
+
+        return new ImageAnalysisResult { Prompt = prompt, Success = success, Result = JsonSerializer.Serialize(result), DenseCaptions = denseCaptionsAll };
     }
 
     private async Task<List<string>> GetDenseCaptions(IFormFile image)
@@ -48,45 +107,29 @@ public class ImageAnalysisService : IImageAnalysisService
         Task.WaitAll(denseCaptionsTask, densePythonCaptionsUpperClothingTask, densePythonCaptionsUpperShoesTask,
             densePythonCaptionsUpperPantsTask);
         var denseCaptionsAll = denseCaptionsTask.Result
-            .Concat(densePythonCaptionsUpperClothingTask.Result)
-            .Concat(densePythonCaptionsUpperShoesTask.Result)
-            .Concat(densePythonCaptionsUpperPantsTask.Result)
+            .Concat(densePythonCaptionsUpperClothingTask.Result.Item2 ? densePythonCaptionsUpperClothingTask.Result.Item1 : new List<string>())
+            .Concat(densePythonCaptionsUpperShoesTask.Result.Item2 ? densePythonCaptionsUpperShoesTask.Result.Item1 : new List<string>())
+            .Concat(densePythonCaptionsUpperPantsTask.Result.Item2 ? densePythonCaptionsUpperPantsTask.Result.Item1 : new List<string>())
             .Distinct().ToList();
         return denseCaptionsAll;
     }
 
     private static string CreatePrompt(string denseCaptions)
     {
-        var builder = new StringBuilder();
-        builder.AppendLine($"Given the captions: \"{denseCaptions}\"");
-        builder.AppendLine($"Note what the person in the captions is wearing out of the following garments list: \"{Garments}\".");
-        builder.AppendLine("We would like to assess the following:");
-        CreateMatchingColorPrompt(builder);
-        CreateWeatherPrompt(builder);
-        CreateGarmentColorPrompt(builder);
-        builder.AppendLine("Provide the response in a json format using the following properties: resultGarmentsColors, resultWearing, matchingWearing, nonMatchingGarmentsWearing, resultWeather, matchingWeather, nonMatchingGarmentsWeather");
-        return builder.ToString();
-    }
-    private static void CreateMatchingColorPrompt(StringBuilder builder)
-    {
-        builder.AppendLine($"Assessment 1 - Does the clothes which the person is wearing fit well in terms of color?");
-        builder.AppendLine("\"resultWearing\": Should explain in 1 short and concise sentence result of assessment 1.");
-        builder.AppendLine("\"matchingWearing\": Should contain either \"true\" or \"false\" bool value according to assessment 1.");
-        builder.AppendLine($"\"nonMatchingGarmentsWearing\": Should contain the garments that are not matching in assessment 1.");
-    }
-
-    private static void CreateWeatherPrompt(StringBuilder builder)
-    {
-        builder.AppendLine("Assessment 2 - Does the clothes which the person is wearing matches a sunny day?");
-        builder.AppendLine("\"resultWeather\": Should explain in 1 short and concise sentence result of assessment 2.");
-        builder.AppendLine("\"matchingWeather\": Should contain either \"true\" or \"false\" bool value according to assessment 2.");
-        builder.AppendLine($"\"nonMatchingGarmentsWeather\": should contain the garments that are not matching in assessment 2.");
-    }
-
-    private static void CreateGarmentColorPrompt(StringBuilder builder)
-    {
-        builder.AppendLine($"Assessment 3 - Summarize what are the color of the garments that the person is wearing?");
-        builder.AppendLine("\"resultGarmentsColors\": Result of assessment 3 in the schema of { \"garment name \": \"garment color\"}.");
-        builder.AppendLine("Not mentioned or undefined or unknown garments should not be included in the response");
+        return @$"
+Given the captions: ""{denseCaptions}"".
+Focus on what the person in the captions is wearing and their colors out of the following garments list: ""{Garments}"".
+Provide a json response according to the following format:
+{{
+    resultGarmentsColors: ""key value pairs of the garments and their colors, don't include garments without a color"",
+    resultWearing: ""Describe what the person is wearing and make sure to include the colors of the garments"",
+    matchingWearing: ""Boolean value indicating whether or not the color combination of the garments is commonly wore by most people"",
+    nonMatchingGarmentsWearing: ""List of garments that don't match if matchingWearing is false"",
+    resultWeather: ""Describe whether the person is dressed for a hot weather?"",
+    matchingWeather: ""True whether the person is dressed for a hot weather, else false"",
+    nonMatchingGarmentsWeather: ""List of garments that the person is dressed which doesn't fit a hot weather""
+}}
+Give me only the json without any additional output.
+";
     }
 }
