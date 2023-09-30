@@ -2,6 +2,9 @@ const {VITE_IMAGE_TYPE} = import.meta.env;
 const canvas = document.getElementById('video') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d', {alpha: false})!;
 const video = document.createElement('video');
+video.muted = true;
+video.autoplay = true;
+video.playsInline = true;
 
 const getVideoPermission = async () => {
     try {

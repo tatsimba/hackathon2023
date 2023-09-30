@@ -37,6 +37,7 @@ canvas {
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  color: black;
   
   &.btn-image {
     border: 0;
@@ -87,7 +88,6 @@ canvas {
     height: 10rem;
     font-weight: bold;
     font-size: 2rem;
-    color: black;
 
     @media screen and (max-width: 768px) {
       width: 15rem;
