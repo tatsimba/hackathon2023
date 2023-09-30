@@ -13,7 +13,16 @@ html, body {
   width: 100%;
   height: 100%;
   font-size: max(calc(.7vh + .1rem), 0.7rem);
+  
+  @media screen and (max-width: 768px) {
+    font-size: 0.4rem;
+  }
+
+  @media screen and (max-width: 1024px) and (orientation:landscape) {
+    font-size: 0.4rem;
+  }
 }
+
 
 button {
   font-family: inherit;
@@ -49,6 +58,14 @@ canvas {
     display: flex;
     justify-content: center;
     align-items: flex-start;
+
+    @media screen and (max-width: 768px) {
+      align-items: flex-end;
+    }
+
+    @media screen and (max-width: 1024px) and (orientation:landscape) {
+      align-items: flex-end;
+    }
   }
 }
 
@@ -61,6 +78,22 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  #btn-start {
+    background: white;
+    border: 3px solid black;
+    border-radius: 100%;
+    width: 10rem;
+    height: 10rem;
+    font-weight: bold;
+    font-size: 2rem;
+
+    @media screen and (max-width: 768px) {
+      width: 15rem;
+      height: 15rem;
+      font-size: 3rem;
+    }
+  }
 }
 
 #layer-loading {
@@ -95,6 +128,10 @@ canvas {
   text-transform: capitalize;
   width: fit-content;
   transform: translate(-50%, -50%);
+
+  @media screen and (max-width: 768px) {
+    transform: none;
+  }
 }
 
 #layer-capture {
@@ -103,6 +140,10 @@ canvas {
 
   .img-capture {
     width: 12rem;
+
+    @media screen and (max-width: 768px) {
+      width: 14rem;
+    }
   }
 
   #btn-capture {
@@ -146,6 +187,10 @@ canvas {
   padding: 3rem; 
   overflow: hidden;
 
+  @media screen and (max-width: 768px) {
+    padding: 1.5rem;
+  }
+
   .top-row {
     display: flex;
     justify-content: space-between;
@@ -163,6 +208,10 @@ canvas {
 
   #btn-restart img {
     width: 8rem;
+
+    @media screen and (max-width: 768px) {
+      width: 5rem;
+    }
   }
 
   #match-weather-response,
@@ -170,6 +219,10 @@ canvas {
     display: flex;
     align-items: flex-start;
     gap: 3rem;
+
+    @media screen and (max-width: 768px) {
+      gap: 1.5rem;
+    }
 
     &.perfect-match {
       .swap-outfit {
@@ -205,6 +258,12 @@ canvas {
       background-color: rgba(255,255,255,0.8);
       font-size: 1.5rem;
       max-width: 55vw;
+
+      @media screen and (max-width: 768px) {
+        font-size: 2rem;
+        padding: 1rem;
+        max-width: 50vw;
+      }
     }
   }
 }

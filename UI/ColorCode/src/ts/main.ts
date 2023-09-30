@@ -6,13 +6,14 @@ import {drawSegmentation, clearSegmentationLayer} from "./layer-segmentation";
 import {toggleLoadingLayer} from "./layer-loading";
 import {createLabel, hideDataLayer, setColorMatchResponse, setWeatherMatchResponse, showDataLayer} from "./layer-data";
 import {imageAnalyzeRequest, segmentationRequest} from "./api";
+import { isMobile } from "./mobile";
 
 const jsConfetti = new JSConfetti()
 
 const fullScreen = async () => {
     const query = new URLSearchParams(location.search);
 
-    if(query.get("fullScreen") !== "false") {
+    if(!isMobile && query.get("fullScreen") !== "false") {
         await document.documentElement.requestFullscreen();
     }
 }
@@ -32,7 +33,7 @@ const onCapture = async () => {
         ]);
 
         if(!analyze.success) {
-            throw new Error("Failed to analyze image pls try again in 30s");
+            throw new Error("Failed to analyze image please try again in 30s");
         }
     
         const {
