@@ -4,16 +4,20 @@ const ctx = canvas.getContext('2d', {alpha: false})!;
 const video = document.createElement('video');
 
 const getVideoPermission = async () => {
-    const constraints = {
-        audio: false,
-        video: {
-            width: window.outerWidth * window.devicePixelRatio,
-            height: window.outerHeight * window.devicePixelRatio,
-            facingMode: { ideal: "user" }
-        }
-    };
-
-    return await navigator.mediaDevices.getUserMedia(constraints);
+    try {
+        const constraints = {
+            audio: false,
+            video: {
+                width: window.outerWidth * window.devicePixelRatio,
+                height: window.outerHeight * window.devicePixelRatio,
+                facingMode: { ideal: "user" }
+            }
+        };
+    
+        return await navigator.mediaDevices.getUserMedia(constraints);
+    } catch (e) {
+        throw new Error('No camera access');
+    }
 }
 
 const rotate = new URLSearchParams(location.search).get("rotate") === "true";
