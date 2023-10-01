@@ -139,6 +139,7 @@ canvas {
 
 #layer-capture {
   overflow: hidden;
+  overscroll-behavior: none;
   padding: 3rem;
 
   .img-capture {
@@ -189,6 +190,7 @@ canvas {
 #layer-data {
   padding: 3rem; 
   overflow: hidden;
+  overscroll-behavior: none;
 
   @media screen and (max-width: 768px) {
     padding: 1.5rem;
