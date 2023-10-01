@@ -15,8 +15,8 @@ const getVideoPermission = async () => {
         const constraints = {
             audio: false,
             video: {
-                width: isMobile ? 300 : window.outerWidth * window.devicePixelRatio,
-                height: isMobile ? 400 : window.outerHeight * window.devicePixelRatio,
+                width: isMobile ? undefined : window.outerWidth * window.devicePixelRatio,
+                height: isMobile ? undefined : window.outerHeight * window.devicePixelRatio,
                 facingMode: { ideal: 'user' }
             }
         };
@@ -55,10 +55,9 @@ const drawVideoFrame = () => {
 
         if(isMobile) {
             const {w, h} = getMobileCanvasSize(video.videoWidth, video.videoHeight);
-            const max = Math.max(w, h);
+            const max = window.innerHeight > window.innerWidth ? h : w;
 
             ctx.save();
-            ctx.translate(-max / 4, 0);
             ctx.scale(-1, 1);
             ctx.drawImage(video, -max, 0, w, h);
             ctx.restore();
