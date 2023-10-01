@@ -15,8 +15,8 @@ const getVideoPermission = async () => {
         const constraints = {
             audio: false,
             video: {
-                width: isMobile ? undefined : window.outerWidth * window.devicePixelRatio,
-                height: isMobile ? undefined : window.outerHeight * window.devicePixelRatio,
+                width: isMobile ? 300 : window.outerWidth * window.devicePixelRatio,
+                height: isMobile ? 400 : window.outerHeight * window.devicePixelRatio,
                 facingMode: { ideal: 'user' }
             }
         };
@@ -29,16 +29,38 @@ const getVideoPermission = async () => {
 
 const rotate = new URLSearchParams(location.search).get("rotate") === "true";
 
+const getMobileCanvasSize = (videoWidth: number, videoHeight: number) => {
+    const vW = videoWidth;
+    const vH = videoHeight;
+    const r = vW / vH;
+
+    if (window.innerHeight > window.innerWidth) {
+        const h = Math.max(window.innerHeight, vH);
+        const w = h * r;
+
+        return {w, h}
+    }
+
+    const w = Math.max(window.innerWidth, vW);
+    const h = w / r;
+    return {w, h}
+}
+
+window.addEventListener('resize', () => {
+    video.videoHeight && setCanvasesSize(video.videoWidth, video.videoHeight);
+});
+
 const drawVideoFrame = () => {
     if(!video.paused && !video.ended) {
 
         if(isMobile) {
-            const vW = video.videoWidth;
-            const vH = video.videoHeight;
+            const {w, h} = getMobileCanvasSize(video.videoWidth, video.videoHeight);
+            const max = Math.max(w, h);
 
             ctx.save();
+            ctx.translate(-max / 4, 0);
             ctx.scale(-1, 1);
-            ctx.drawImage(video, -vW, 0, vW, vH);
+            ctx.drawImage(video, -max, 0, w, h);
             ctx.restore();
 
         } else if(!rotate) {
@@ -64,6 +86,12 @@ const drawVideoFrame = () => {
 
 const setCanvasesSize = (width: number, height: number) => {
     const canvases = document.querySelectorAll('canvas');
+    
+    if(isMobile) {
+        const {w, h} = getMobileCanvasSize(width, height);
+        width = w;
+        height = h;
+    }
 
     canvases.forEach(canvas => {
         canvas.width = width;
