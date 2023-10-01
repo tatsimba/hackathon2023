@@ -46,9 +46,9 @@ const getMobileCanvasSize = (videoWidth: number, videoHeight: number) => {
     return {w, h}
 }
 
-window.addEventListener('resize', () => {
-    video.videoHeight && setCanvasesSize(video.videoWidth, video.videoHeight);
-});
+// window.addEventListener('resize', () => {
+//     video.videoHeight && setCanvasesSize(video.videoWidth, video.videoHeight);
+// });
 
 const drawVideoFrame = () => {
     if(!video.paused && !video.ended) {
