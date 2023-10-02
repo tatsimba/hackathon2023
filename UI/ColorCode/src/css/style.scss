@@ -296,13 +296,13 @@ canvas {
 }
 
 .loader-animation {
-  animation: loader 5s linear infinite;
+  animation: loader 20s linear infinite;
 }
 
 
 @keyframes loader {
-  90% {
-    filter: saturate(10);
+  100% {
+    transform: rotate(360deg);
   }
 }
 
